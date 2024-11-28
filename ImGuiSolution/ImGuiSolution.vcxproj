@@ -141,6 +141,7 @@
     <ClCompile Include="..\thirdparty\imgui\imgui_stdlib.cpp" />
     <ClCompile Include="..\thirdparty\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\thirdparty\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="DirectWindow.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -153,7 +154,9 @@
     <ClInclude Include="..\thirdparty\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\thirdparty\imgui\imstb_textedit.h" />
     <ClInclude Include="..\thirdparty\imgui\imstb_truetype.h" />
+    <ClInclude Include="DirectWindow.h" />
     <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\thirdparty\imgui\imgui.gdb" />

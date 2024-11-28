@@ -1,6 +1,5 @@
 #pragma once
 
-#include "imgui.h"
 
 namespace MainWindow
 {
@@ -12,4 +11,5 @@ namespace MainWindow
 
         ImGui::End();
 	}
+
 }

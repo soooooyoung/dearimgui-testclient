@@ -26,6 +26,7 @@
     <ClCompile Include="..\thirdparty\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
+    <ClCompile Include="DirectWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
@@ -61,6 +62,8 @@
       <Filter>imgui</Filter>
     </ClInclude>
     <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="DirectWindow.h" />
+    <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\thirdparty\imgui\imgui.gdb">
