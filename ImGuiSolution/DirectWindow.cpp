@@ -1,215 +1,185 @@
-#include "pch.h"
 #include "DirectWindow.h"
+#include "D3D11Render.h"
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
+#include <d3d11.h>
+#include <tchar.h>
 
-IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+static UINT  g_ResizeWidth = 0, g_ResizeHeight = 0;
 
-namespace MainWindow {
+DirectWindow::DirectWindow()
+{
+    mRenderer = new D3D11Render();
+}
 
-    DirectWindow::DirectWindow()
+DirectWindow::~DirectWindow()
+{
+    CleanupImGui();
+    mRenderer->CleanupDeviceD3D();
+
+    ::DestroyWindow(mHwnd);
+    ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+}
+
+bool DirectWindow::Initialize()
+{
+    if (false == InitializeImGui())
+        return false;
+
+    return true;
+}
+
+bool DirectWindow::InitializeImGui()
+{
+    if (nullptr == mRenderer)
+        return false;
+
+    wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui Example", nullptr };
+    ::RegisterClassExW(&wc);
+    mHwnd = ::CreateWindowW(wc.lpszClassName, L"Dear ImGui DirectX11 Example", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
+
+    // Initialize Direct3D
+    if (false == mRenderer->CreateDeviceD3D(mHwnd))
     {
+        mRenderer->CleanupDeviceD3D();
+        ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+        return false;
     }
 
-    DirectWindow::~DirectWindow()
-    {
-    }
+    // Show the window
+    ::ShowWindow(mHwnd, SW_SHOWDEFAULT);
+    ::UpdateWindow(mHwnd);
 
-    bool DirectWindow::Initialize()
-    {
-		if (!CreateDirectWindow())
-		{
-			return false;
-		}
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
 
-        if (!CreateDeviceD3D())
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplWin32_Init(mHwnd);
+    ImGui_ImplDX11_Init(mRenderer->pd3dDevice.Get(), mRenderer->pd3dDeviceContext.Get());
+
+    return true;
+}
+
+void DirectWindow::CleanupImGui()
+{
+    ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void DirectWindow::RunLoop()
+{
+    bool done = false;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImGuiIO& io = ImGui::GetIO();
+    while (!done)
+    {
+        MSG msg;
+        while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
         {
-			CleanupDeviceD3D();
-			::UnregisterClassW(WindowClass.lpszClassName, WindowClass.hInstance);
-			return false;
+            ::TranslateMessage(&msg);
+            ::DispatchMessage(&msg);
+            if (msg.message == WM_QUIT)
+                done = true;
         }
+        if (done)
+            break;
 
-        ::ShowWindow(WindowHwnd, SW_SHOWDEFAULT);
-        ::UpdateWindow(WindowHwnd);
-
-        return true;
-    }
-
-    void DirectWindow::Destroy()
-    {
-        ::DestroyWindow(WindowHwnd);
-        ::UnregisterClassW(WindowClass.lpszClassName, WindowClass.hInstance);
-    }
-
-    bool DirectWindow::CreateDeviceD3D()
-    {
-        // Setup swap chain
-        DXGI_SWAP_CHAIN_DESC sd;
-        ZeroMemory(&sd, sizeof(sd));
-        sd.BufferCount = 2;
-        sd.BufferDesc.Width = 0;
-        sd.BufferDesc.Height = 0;
-        sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        sd.BufferDesc.RefreshRate.Numerator = 60;
-        sd.BufferDesc.RefreshRate.Denominator = 1;
-        sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-        sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        sd.OutputWindow = WindowHwnd;
-        sd.SampleDesc.Count = 1;
-        sd.SampleDesc.Quality = 0;
-        sd.Windowed = TRUE;
-        sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-
-        UINT createDeviceFlags = 0;
-        //createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-        D3D_FEATURE_LEVEL featureLevel;
-        const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
-        HRESULT res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &mpSwapChain, &mDevice, &featureLevel, &mDeviceContext);
-        if (res == DXGI_ERROR_UNSUPPORTED) // Try high-performance WARP software driver if hardware is not available.
-            res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_WARP, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &mpSwapChain, &mDevice, &featureLevel, &mDeviceContext);
-        if (res != S_OK)
-            return false;
-
-        CreateRenderTarget();
-        return true;
-    }
-
-    void DirectWindow::CleanupDeviceD3D()
-    {
-        CleanupRenderTarget();
-        if (mpSwapChain) { mpSwapChain->Release(); mpSwapChain = nullptr; }
-        if (mDeviceContext) { mDeviceContext->Release(); mDeviceContext = nullptr; }
-        if (mDevice) { mDevice->Release(); mDevice = nullptr; }
-    }
-
-    void DirectWindow::CreateRenderTarget()
-    {
-        ID3D11Texture2D* pBackBuffer;
-        mpSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
-        mDevice->CreateRenderTargetView(pBackBuffer, nullptr, &mRenderTargetView);
-        pBackBuffer->Release();
-    }
-
-    void DirectWindow::CleanupRenderTarget()
-    {
-        if (mRenderTargetView) { mRenderTargetView->Release(); mRenderTargetView = nullptr; }
-    }
-
-    void DirectWindow::RenderUI()
-    {
-
-        if (g_SwapChainOccluded && mpSwapChain->Present(0, DXGI_PRESENT_TEST) == DXGI_STATUS_OCCLUDED)
-        {
-            ::Sleep(10);
-            return;
-        }
-        g_SwapChainOccluded = false;
-
-        // Handle window resize (we don't resize directly in the WM_SIZE handler)
         if (g_ResizeWidth != 0 && g_ResizeHeight != 0)
         {
-            CleanupRenderTarget();
-            mpSwapChain->ResizeBuffers(0, g_ResizeWidth, g_ResizeHeight, DXGI_FORMAT_UNKNOWN, 0);
+            mRenderer->Resize(g_ResizeWidth, g_ResizeHeight);
             g_ResizeWidth = g_ResizeHeight = 0;
-            CreateRenderTarget();
+            mRenderer->CreateRenderTarget();
         }
-
-        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::Begin("Hello, World", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+        if (mShowDemoWindow)
+            ImGui::ShowDemoWindow(&mShowDemoWindow);
 
-        ImGui::Text("This is some useful text.");
+        {
+            static float f = 0.0f;
+            static int counter = 0;
 
-        ImGui::End();
+            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-        ImGui::EndFrame();
+            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Demo Window", &mShowDemoWindow);      // Edit bools storing our window open/close state
+            ImGui::Checkbox("Another Window", &mShowAnotherWindow);
+
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++;
+            ImGui::SameLine();
+            ImGui::Text("counter = %d", counter);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+            ImGui::End();
+        }
+
+
+
+        // Rendering
         ImGui::Render();
         const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-        mDeviceContext->OMSetRenderTargets(1, &mRenderTargetView, nullptr);
-        mDeviceContext->ClearRenderTargetView(mRenderTargetView, clear_color_with_alpha);
+        mRenderer->Render(clear_color_with_alpha);
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-    }
 
-    bool DirectWindow::CreateDirectWindow()
-    {
-        WindowClass.cbSize = sizeof(WNDCLASSEX);
-        WindowClass.style = CS_CLASSDC;
-        WindowClass.lpfnWndProc = WndProc;
-        WindowClass.cbClsExtra = 0;
-        WindowClass.cbWndExtra = 0;
-        WindowClass.hInstance = GetModuleHandle(nullptr);
-        WindowClass.hIcon = nullptr;
-        WindowClass.hCursor = nullptr;
-        WindowClass.hbrBackground = nullptr;
-        WindowClass.lpszMenuName = nullptr;
-        WindowClass.lpszClassName = L"ImGui Test Client";
-        WindowClass.hIconSm = nullptr;
-        ::RegisterClassExW(&WindowClass);
+        // Update and Render additional Platform Windows
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
 
-        WindowHwnd = ::CreateWindow(WindowClass.lpszClassName, L"ImGui Test Client", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, WindowClass.hInstance, nullptr);
-
-        return true;
-    }
-    bool DirectWindow::InitializeImGui()
-    {
-        // Setup Dear ImGui context
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO(); (void)io;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-
-        ImGui::StyleColorsDark();
-
-        ImGuiStyle& style = ImGui::GetStyle();
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            style.WindowRounding = 0.0f;
-            style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-        }
-
-        // Setup Platform/Renderer backends
-        ImGui_ImplWin32_Init(WindowHwnd);
-        ImGui_ImplDX11_Init(mDevice, mDeviceContext);
-
-		return true;
-    }
-
-    LRESULT WINAPI DirectWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-    {
-        if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-            return true;
-
-        switch (msg)
-        {
-        case WM_SIZE:
-            if (wParam == SIZE_MINIMIZED)
-                return 0;
-            g_ResizeWidth = (UINT)LOWORD(lParam); // Queue resize
-            g_ResizeHeight = (UINT)HIWORD(lParam);
-            return 0;
-        case WM_SYSCOMMAND:
-            if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
-                return 0;
-            break;
-        case WM_DESTROY:
-            ::PostQuitMessage(0);
-            return 0;
-        case WM_DPICHANGED:
-            if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)
-            {
-                //const int dpi = HIWORD(wParam);
-                //printf("WM_DPICHANGED to %d (%.0f%%)\n", dpi, (float)dpi / 96.0f * 100.0f);
-                const RECT* suggested_rect = (RECT*)lParam;
-                ::SetWindowPos(hWnd, nullptr, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
-            }
-            break;
-        }
-        return ::DefWindowProcW(hWnd, msg, wParam, lParam);
+        mRenderer->pSwapChain->Present(1, 0); // Present with vsync
     }
 }
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+        return true;
+
+    DirectWindow* window = reinterpret_cast<DirectWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+
+
+    switch (msg)
+    {
+    case WM_SIZE:
+        if (wParam == SIZE_MINIMIZED)
+            return 0;
+
+        g_ResizeWidth = (UINT)LOWORD(lParam); // Queue resize
+        g_ResizeHeight = (UINT)HIWORD(lParam);
+        return 0;
+    case WM_SYSCOMMAND:
+        if ((wParam & 0xfff0) == SC_KEYMENU)
+            return 0;
+        break;
+    case WM_DESTROY:
+        ::PostQuitMessage(0);
+        return 0;
+    case WM_DPICHANGED:
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)
+        {
+            const RECT* suggested_rect = (RECT*)lParam;
+            ::SetWindowPos(hWnd, nullptr, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+        break;
+    }
+    return ::DefWindowProcW(hWnd, msg, wParam, lParam);
+}
