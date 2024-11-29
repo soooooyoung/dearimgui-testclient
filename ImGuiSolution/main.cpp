@@ -1,14 +1,11 @@
 #include "pch.h"
-#include "MainWindow.h"
+
 #include "DirectWindow.h"
 #include <tchar.h>
 
-// Link with Ws2_32.lib
-#pragma comment(lib, "Ws2_32.lib")
 
-inline std::unique_ptr<MainWindow::DirectWindow> g_D3D11Window = std::make_unique<MainWindow::DirectWindow>();
 bool isRunning = true;
-
+inline std::unique_ptr<MainWindow::DirectWindow> g_D3D11Window = std::make_unique<MainWindow::DirectWindow>();
 
 bool InitializeSocket()
 {
@@ -23,7 +20,7 @@ bool InitializeSocket()
     if (ConnectSocket == INVALID_SOCKET) {
         std::cerr << "Socket creation failed with error: " << WSAGetLastError() << std::endl;
         WSACleanup();
-        return 1;
+        return false;
     }
 
     struct addrinfo* result = nullptr;
@@ -39,7 +36,7 @@ bool InitializeSocket()
         std::cerr << "getaddrinfo failed with error: " << ret << std::endl;
         closesocket(ConnectSocket);
         WSACleanup();
-        return 1;
+        return false;
     }
 
     ret = connect(ConnectSocket, result->ai_addr, static_cast<int>(result->ai_addrlen));
@@ -48,20 +45,22 @@ bool InitializeSocket()
         freeaddrinfo(result);
         closesocket(ConnectSocket);
         WSACleanup();
-        return 1;
+        return false;
     }
 
     freeaddrinfo(result);
     std::cout << "Successfully connected to the server." << std::endl;
+
+    return true;
 }
 
 // Main code
 int main(int, char**)
 {
 	// Initialize WinSock
-    if (!InitializeSocket()) {
-        return 1;
-    }
+    //if (!InitializeSocket()) {
+    //    return 1;
+    //}
 
 	// Create application window
 	if (!g_D3D11Window->Initialize())
@@ -69,44 +68,11 @@ int main(int, char**)
 		return 1;
 	}
 
-    // Initialize Direct3D
-	if (false == g_D3D11Window->CreateDeviceD3D())
-    {
-        return 1;
-    }
-
-    // Show the window
-	::ShowWindow(g_D3D11Window->GetWindowHwnd(), SW_SHOWDEFAULT);
-    ::UpdateWindow(g_D3D11Window->GetWindowHwnd());
-
     // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-
-    ImGui::StyleColorsDark();
-
-
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    }
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplWin32_Init(g_D3D11Window->GetWindowHwnd());
-    ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
-
-
-    // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	if (!g_D3D11Window->InitializeImGui())
+	{
+		return 1;
+	}
 
     // Main loop
     bool done = false;
@@ -122,53 +88,16 @@ int main(int, char**)
             if (msg.message == WM_QUIT)
                 done = true;
         }
+
         if (done)
             break;
 
-        // Handle window being minimized or screen locked
-        if (g_SwapChainOccluded && g_pSwapChain->Present(0, DXGI_PRESENT_TEST) == DXGI_STATUS_OCCLUDED)
-        {
-            ::Sleep(10);
-            continue;
-        }
-        g_SwapChainOccluded = false;
-
-        // Handle window resize (we don't resize directly in the WM_SIZE handler)
-        if (g_ResizeWidth != 0 && g_ResizeHeight != 0)
-        {
-            g_D3D11Window->CleanupRenderTarget();
-            g_pSwapChain->ResizeBuffers(0, g_ResizeWidth, g_ResizeHeight, DXGI_FORMAT_UNKNOWN, 0);
-            g_ResizeWidth = g_ResizeHeight = 0;
-            g_D3D11Window->CreateRenderTarget();
-        }
-
-        // Start the Dear ImGui frame
-        ImGui_ImplDX11_NewFrame();
-        ImGui_ImplWin32_NewFrame();
-        ImGui::NewFrame();
-
-		MainWindow::RenderUI();
-
-
-        // Rendering
-		ImGui::EndFrame();
-        ImGui::Render();
-        const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-        g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
-        g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
-        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-        // Update and Render additional Platform Windows
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-        }
+		g_D3D11Window->RenderUI();
 
         // Present
-        HRESULT hr = g_pSwapChain->Present(1, 0);   // Present with vsync
+        HRESULT hr = g_D3D11Window->mpSwapChain->Present(1, 0);   // Present with vsync
         //HRESULT hr = g_pSwapChain->Present(0, 0); // Present without vsync
-        g_SwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
+        MainWindow::g_SwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
     }
 
     // Cleanup
