@@ -108,6 +108,7 @@
       <AdditionalIncludeDirectories>..\thirdparty\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,6 +128,7 @@
       <AdditionalIncludeDirectories>..\thirdparty\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -148,6 +150,7 @@
     <ClCompile Include="D3D11Render.cpp" />
     <ClCompile Include="DirectWindow.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="NetworkClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\thirdparty\imgui\imconfig.h" />
@@ -161,7 +164,8 @@
     <ClInclude Include="..\thirdparty\imgui\imstb_truetype.h" />
     <ClInclude Include="D3D11Render.h" />
     <ClInclude Include="DirectWindow.h" />
-    <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="NetworkClient.h" />
+    <ClInclude Include="NetworkPacket.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\thirdparty\imgui\imgui.gdb" />
