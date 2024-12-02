@@ -29,6 +29,8 @@
     <ClCompile Include="DirectWindow.cpp" />
     <ClCompile Include="D3D11Render.cpp" />
     <ClCompile Include="NetworkClient.cpp" />
+    <ClCompile Include="NetworkManager.cpp" />
+    <ClCompile Include="App.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
@@ -67,6 +69,8 @@
     <ClInclude Include="D3D11Render.h" />
     <ClInclude Include="NetworkPacket.h" />
     <ClInclude Include="NetworkClient.h" />
+    <ClInclude Include="NetworkManager.h" />
+    <ClInclude Include="App.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\thirdparty\imgui\imgui.gdb">

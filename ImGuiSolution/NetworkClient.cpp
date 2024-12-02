@@ -1,5 +1,5 @@
 #include "NetworkClient.h"
-
+#include "NetworkPacket.h"
 
 NetworkClient::NetworkClient() : mSocket(INVALID_SOCKET)
 {
@@ -15,7 +15,7 @@ bool NetworkClient::Initialize()
 	WSADATA wsaData;
 	if (0 != WSAStartup(MAKEWORD(2, 2), &wsaData))
 	{
-		std::cerr << "Failed to initialize Winsock" << std::endl;
+		printf_s("Failed to initialize Winsock: %d\n", WSAGetLastError());
 		return false;
 	}
 
@@ -23,7 +23,7 @@ bool NetworkClient::Initialize()
 
 	if (sock == INVALID_SOCKET)
 	{
-		std::cerr << "Failed to create socket: " << WSAGetLastError() << std::endl;
+		printf_s("Failed to create socket: %d\n", WSAGetLastError());
 		return false;
 	}
 
@@ -48,13 +48,13 @@ bool NetworkClient::Connect(const std::string& ipAddress, int port)
 
 	if (SOCKET_ERROR == connect(mSocket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)))
 	{
-		std::cerr << "Failed to connect to server: " << WSAGetLastError() << std::endl;
+		printf_s("Failed to connect to server: %d\n", WSAGetLastError());
 		return false;
 	}
 
 	if (setsockopt(mSocket, IPPROTO_TCP, TCP_NODELAY, "1", sizeof(char)) == SOCKET_ERROR)
 	{
-		std::cerr << "Failed to set TCP_NODELAY: " << WSAGetLastError() << std::endl;
+		printf_s("Failed to set TCP_NODELAY: %d\n", WSAGetLastError());
 		return false;
 	}
 
@@ -70,10 +70,7 @@ void NetworkClient::Run()
 bool NetworkClient::Send(const char* message)
 {
     NetworkPacket packet;
-
-
 	packet.Header.PacketID = 1;
-
 	packet.Header.BodyLength = strlen(message);
 	memcpy(packet.Body.data(), message, strlen(message));
 
@@ -98,13 +95,13 @@ bool NetworkClient::Receive() const
 		int received = recv(mSocket, reinterpret_cast<char*>(buffer.data() + currentSize), buffer.size() - currentSize, 0);
 		if (received == SOCKET_ERROR)
 		{
-			std::cerr << "Failed to receive data: " << WSAGetLastError() << std::endl;
+			printf_s("Error receiving data: %d\n", WSAGetLastError());
 			return false;
 		}
 
 		if (received == 0)
 		{
-			std::cerr << "Connection closed" << std::endl;
+			printf_s("Connection closed by server\n");
 			return false;
 		}
 
@@ -118,8 +115,6 @@ bool NetworkClient::Receive() const
 			auto packetHeader = reinterpret_cast<NetworkPacket::PacketHeader*>(buffer.data());
 			auto packetLength = packetHeader->BodyLength + sizeof(NetworkPacket::PacketHeader);
 
-			printf_s("PacketLength: %d\n", packetLength);
-
 			// Check if the full packet has been received
 			if (buffer.size() >= packetLength)
 			{
@@ -127,9 +122,7 @@ bool NetworkClient::Receive() const
 				packet->Header = *packetHeader;
 				std::memcpy(packet->Body.data(), buffer.data() + sizeof(NetworkPacket::PacketHeader), packetHeader->BodyLength);
 
-
-				printf_s("PacketBody: %s\n", packet->GetBody());
-
+				printf_s("Received message: %s\n", packet->Body.data());
 				// TODO: Process packet
 
 				buffer.erase(buffer.begin(), buffer.begin() + packetLength);

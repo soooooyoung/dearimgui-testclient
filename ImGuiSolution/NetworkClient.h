@@ -11,8 +11,8 @@
 #pragma comment(lib, "ws2_32.lib")
 
 const int MAX_BUFFER_SIZE = 8192;
-#include "NetworkPacket.h"
 
+class NetworkPacket;
 class NetworkClient {
 	 
 public:
@@ -26,7 +26,6 @@ public:
 	bool Send(const char* message);
 	bool Receive() const;
 private:
-
 
 	SOCKET mSocket;
 	std::thread mReceiveThread;
