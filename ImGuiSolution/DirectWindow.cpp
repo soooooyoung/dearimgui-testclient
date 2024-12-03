@@ -52,13 +52,21 @@ bool DirectWindow::_InitializeImGui()
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+
+
+    io.ConfigViewportsNoAutoMerge = true;
+    //io.ConfigViewportsNoTaskBarIcon = true;
 
     // Setup Dear ImGui style
+    StyleColorsDark();
     ImGui::StyleColorsDark();
-	StyleColorsDark();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
 
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(mHwnd);
@@ -80,14 +88,17 @@ bool DirectWindow::MainUI()
     const char* window_id = "###MainWindow";
 	const char* window_title = "Main Window";
 
+    ImGuiIO& io = ImGui::GetIO();
+    ImVec2 displaySize = io.DisplaySize;
+
+    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f)); // place the next window in the top left corner (0,0)
+    ImGui::SetNextWindowSize(io.DisplaySize); // make the next window fullscreen
+
     ImGui::Begin(window_title,
         &mShowMainUI,
-        // ImGuiWindowFlags_NoResize |
-        // ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoTitleBar |
-        // ImGuiWindowFlags_NoBringToFrontOnFocus |
-        // ImGuiWindowFlags_NoDocking |
-        ImGuiWindowFlags_AlwaysAutoResize |
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoResize |
         0);
 
     ImVec2 button_size = ImVec2(ImGui::GetTextLineHeightWithSpacing(),
@@ -103,6 +114,8 @@ bool DirectWindow::MainUI()
 		mShowMainUI = false;
 		return false;
 	}
+
+	ImGui::SameLine();
 	
 	if (ImGui::Button("Send", button_size))
 	{
@@ -111,6 +124,27 @@ bool DirectWindow::MainUI()
 			mCommandCallback(Command(CommandType::Send, "Hello World"));
 		}
 	}
+
+    ImVec2 contentSize = ImGui::GetContentRegionAvail();
+    if (contentSize.y < 500) contentSize.y = 500;
+    {
+        if (ImGui::BeginTabBar("MyTabBar", ImGuiTabBarFlags_None))
+        {
+            if (ImGui::BeginTabItem("Audio"))
+            {
+				ImGui::Text("Audio Panel");
+
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Theme"))
+            {
+                ImGui::ShowStyleEditor();
+
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
+        }
+    }
 
 	ImGui::End();
 	return true;
@@ -188,7 +222,7 @@ void DirectWindow::RunLoop()
 {
     bool done = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    ImGuiIO& io = ImGui::GetIO();
+
     while (!done)
     {
         MSG msg;
@@ -220,7 +254,7 @@ void DirectWindow::RunLoop()
 			done = true;
         }
 		
-        ImGui::ShowUserGuide();
+        //ImGui::ShowUserGuide();
 
         // Rendering
         ImGui::Render();
