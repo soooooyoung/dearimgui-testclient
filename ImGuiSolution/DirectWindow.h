@@ -1,10 +1,14 @@
 #include <wtypes.h>
 #include <d3d11.h>
 #include <tchar.h>
+#include <functional>
+#include <string>
+#include <memory>
 
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
+#include "Command.h"
 
 
 class D3D11Render;
@@ -18,12 +22,15 @@ public:
 	void RunLoop();
 
 	D3D11Render* mRenderer;
-private:
-	bool InitializeImGui();
-	void CleanupImGui();
+	std::function<void(Command&&)> mCommandCallback;
 
-	bool mShowDemoWindow = true;
-	bool mShowAnotherWindow = true;
+	bool MainUI();
+	void StyleColorsDark();
+private:
+	bool _InitializeImGui();
+	void _CleanupImGui();
+
+	bool mShowMainUI = true;
 
 	HWND mHwnd = nullptr;
 	WNDCLASSEXW wc = {};

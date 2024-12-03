@@ -8,6 +8,17 @@ NetworkClient::NetworkClient() : mSocket(INVALID_SOCKET)
 NetworkClient::~NetworkClient()
 {
 	WSACleanup();
+
+	if (mSocket != INVALID_SOCKET)
+	{
+		closesocket(mSocket);
+		mSocket = INVALID_SOCKET;
+	}
+
+	if (mReceiveThread.joinable())
+	{
+		mReceiveThread.join();
+	}
 }
 
 bool NetworkClient::Initialize()
@@ -45,14 +56,15 @@ bool NetworkClient::Connect(const std::string& ipAddress, int port)
 	inet_pton(AF_INET, ipAddress.c_str(), &serverAddress.sin_addr);
 	serverAddress.sin_port = htons(port);
 
-
 	if (SOCKET_ERROR == connect(mSocket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)))
 	{
 		printf_s("Failed to connect to server: %d\n", WSAGetLastError());
 		return false;
 	}
 
-	if (setsockopt(mSocket, IPPROTO_TCP, TCP_NODELAY, "1", sizeof(char)) == SOCKET_ERROR)
+	// Disable Nagle's algorithm
+	int flag = 1;
+	if (setsockopt(mSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(char)) == SOCKET_ERROR)
 	{
 		printf_s("Failed to set TCP_NODELAY: %d\n", WSAGetLastError());
 		return false;
@@ -77,7 +89,19 @@ bool NetworkClient::Send(const char* message)
 	size_t totalSize = sizeof(NetworkPacket::PacketHeader) + packet.GetBodySize();
 	int result = send(mSocket, reinterpret_cast<const char*>(&packet), totalSize, 0);
 
-	return result != SOCKET_ERROR;
+	if (result == SOCKET_ERROR)
+	{
+		printf_s("Failed to send data: %d\n", WSAGetLastError());
+		return false;
+	}
+
+	if (result != totalSize)
+	{
+		printf_s("Failed to send all data: %d\n", WSAGetLastError());
+		return false;
+	}
+
+	return true;
 }
 
 bool NetworkClient::Receive() const
@@ -87,6 +111,8 @@ bool NetworkClient::Receive() const
 
 	while (true)
 	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
 		// Resize buffer to receive more data if necessary
 		size_t currentSize = buffer.size();
 		buffer.resize(currentSize + 1024); // Arbitrary chunk size for receiving more data

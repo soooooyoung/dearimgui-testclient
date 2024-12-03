@@ -71,6 +71,7 @@
     <ClInclude Include="NetworkClient.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="App.h" />
+    <ClInclude Include="Command.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\thirdparty\imgui\imgui.gdb">

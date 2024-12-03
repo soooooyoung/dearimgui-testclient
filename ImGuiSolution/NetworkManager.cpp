@@ -25,8 +25,11 @@ bool NetworkManager::CreateNetwork()
 		return false;
 	}
 
-	mClient->Run();
-
 	return true;
+}
+
+bool NetworkManager::Send(const std::string& message) const
+{
+	return mClient->Send(message.c_str());
 }
 

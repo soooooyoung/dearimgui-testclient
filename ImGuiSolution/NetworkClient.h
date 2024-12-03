@@ -12,7 +12,7 @@
 
 const int MAX_BUFFER_SIZE = 8192;
 
-class NetworkPacket;
+struct NetworkPacket;
 class NetworkClient {
 	 
 public:

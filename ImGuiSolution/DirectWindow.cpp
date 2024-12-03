@@ -1,5 +1,6 @@
 #include "DirectWindow.h"
 #include "D3D11Render.h"
+#include "Command.h"
 
 static UINT  g_ResizeWidth = 0, g_ResizeHeight = 0;
 
@@ -10,7 +11,7 @@ DirectWindow::DirectWindow()
 
 DirectWindow::~DirectWindow()
 {
-    CleanupImGui();
+    _CleanupImGui();
     mRenderer->CleanupDeviceD3D();
 
     ::DestroyWindow(mHwnd);
@@ -19,13 +20,13 @@ DirectWindow::~DirectWindow()
 
 bool DirectWindow::Initialize()
 {
-    if (false == InitializeImGui())
+    if (false == _InitializeImGui())
         return false;
 
     return true;
 }
 
-bool DirectWindow::InitializeImGui()
+bool DirectWindow::_InitializeImGui()
 {
     if (nullptr == mRenderer)
         return false;
@@ -57,6 +58,7 @@ bool DirectWindow::InitializeImGui()
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
+	StyleColorsDark();
 
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(mHwnd);
@@ -65,11 +67,121 @@ bool DirectWindow::InitializeImGui()
     return true;
 }
 
-void DirectWindow::CleanupImGui()
+void DirectWindow::_CleanupImGui()
 {
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
+}
+
+bool DirectWindow::MainUI()
+{
+    const char* app_name = "Test Client";
+    const char* window_id = "###MainWindow";
+	const char* window_title = "Main Window";
+
+    ImGui::Begin(window_title,
+        &mShowMainUI,
+        // ImGuiWindowFlags_NoResize |
+        // ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoTitleBar |
+        // ImGuiWindowFlags_NoBringToFrontOnFocus |
+        // ImGuiWindowFlags_NoDocking |
+        ImGuiWindowFlags_AlwaysAutoResize |
+        0);
+
+    ImVec2 button_size = ImVec2(ImGui::GetTextLineHeightWithSpacing(),
+        ImGui::GetTextLineHeightWithSpacing());
+
+    if (!mShowMainUI)
+    {
+        return false;
+    }
+
+	if (ImGui::Button("X", button_size))
+	{
+		mShowMainUI = false;
+		return false;
+	}
+	
+	if (ImGui::Button("Send", button_size))
+	{
+		if (mCommandCallback)
+		{
+			mCommandCallback(Command(CommandType::Send, "Hello World"));
+		}
+	}
+
+	ImGui::End();
+	return true;
+}
+
+void DirectWindow::StyleColorsDark()
+{
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.Alpha = 1.0;
+    style.WindowRounding = 3;
+    style.GrabRounding = 1;
+    style.GrabMinSize = 20;
+    style.FrameRounding = 3;
+    style.WindowBorderSize = 0;
+    style.ChildBorderSize = 0;
+    style.FrameBorderSize = 1;
+
+    // Based on this theme by enemymouse:
+    // https://github.com/ocornut/imgui/issues/539#issuecomment-204412632
+    // https://gist.github.com/enemymouse/c8aa24e247a1d7b9fc33d45091cbb8f0
+    ImVec4* colors = style.Colors;
+    colors[ImGuiCol_Text] = ImVec4(0.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_TextDisabled] = ImVec4(0.00f, 0.40f, 0.41f, 1.00f);
+    colors[ImGuiCol_WindowBg] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+    colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
+    colors[ImGuiCol_Border] = ImVec4(0.00f, 1.00f, 1.00f, 0.65f);
+    colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_FrameBg] = ImVec4(0.44f, 0.80f, 0.80f, 0.18f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.44f, 0.80f, 0.80f, 0.27f);
+    colors[ImGuiCol_FrameBgActive] = ImVec4(0.44f, 0.81f, 0.86f, 0.66f);
+    colors[ImGuiCol_TitleBg] = ImVec4(0.14f, 0.18f, 0.21f, 0.78f);
+    colors[ImGuiCol_TitleBgActive] = ImVec4(0.00f, 0.54f, 0.55f, 0.78f);
+    colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 0.78f);
+    colors[ImGuiCol_MenuBarBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.20f);
+    colors[ImGuiCol_ScrollbarBg] = ImVec4(0.22f, 0.29f, 0.30f, 0.71f);
+    colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.00f, 1.00f, 1.00f, 0.44f);
+    colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.00f, 1.00f, 1.00f, 0.74f);
+    colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.80f, 0.99f, 0.99f, 1.00f);
+    colors[ImGuiCol_CheckMark] = ImVec4(0.00f, 1.00f, 1.00f, 0.68f);
+    colors[ImGuiCol_SliderGrab] = ImVec4(0.00f, 1.00f, 1.00f, 0.36f);
+    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.80f, 0.99f, 0.99f, 1.00f);
+    colors[ImGuiCol_Button] = ImVec4(0.00f, 0.65f, 0.65f, 0.46f);
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.01f, 1.00f, 1.00f, 0.43f);
+    colors[ImGuiCol_ButtonActive] = ImVec4(0.80f, 0.99f, 0.99f, 1.00f);
+    colors[ImGuiCol_Header] = ImVec4(0.00f, 1.00f, 1.00f, 0.33f);
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.00f, 1.00f, 1.00f, 0.42f);
+    colors[ImGuiCol_HeaderActive] = ImVec4(1.00f, 1.00f, 1.00f, 0.54f);
+    colors[ImGuiCol_Separator] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+    colors[ImGuiCol_SeparatorHovered] = ImVec4(0.10f, 0.40f, 0.75f, 0.78f);
+    colors[ImGuiCol_SeparatorActive] = ImVec4(0.10f, 0.40f, 0.75f, 1.00f);
+    colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 1.00f, 1.00f, 0.54f);
+    colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.00f, 1.00f, 1.00f, 0.74f);
+    colors[ImGuiCol_ResizeGripActive] = ImVec4(0.80f, 0.99f, 0.99f, 1.00f);
+    colors[ImGuiCol_Tab] = ImVec4(0.12f, 0.31f, 0.31f, 1.00f);
+    colors[ImGuiCol_TabHovered] = ImVec4(0.80f, 0.99f, 0.99f, 1.00f);
+    colors[ImGuiCol_TabActive] = ImVec4(0.00f, 0.62f, 0.62f, 1.00f);
+    colors[ImGuiCol_TabUnfocused] = ImVec4(0.08f, 0.15f, 0.15f, 1.00f);
+    colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.14f, 0.43f, 0.43f, 1.00f);
+    colors[ImGuiCol_DockingPreview] = ImVec4(0.80f, 0.99f, 0.99f, 1.00f);
+    colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+    colors[ImGuiCol_PlotLines] = ImVec4(0.80f, 0.99f, 0.99f, 1.00f);
+    colors[ImGuiCol_PlotLinesHovered] = ImVec4(0.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_PlotHistogram] = ImVec4(0.80f, 0.99f, 0.99f, 1.00f);
+    colors[ImGuiCol_PlotHistogramHovered] = ImVec4(0.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_TextSelectedBg] = ImVec4(0.00f, 1.00f, 1.00f, 0.22f);
+    colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
+    colors[ImGuiCol_NavHighlight] = ImVec4(0.94f, 0.98f, 0.26f, 1.00f);
+    colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+    colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+    colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.04f, 0.10f, 0.09f, 0.51f);
 }
 
 void DirectWindow::RunLoop()
@@ -100,33 +212,15 @@ void DirectWindow::RunLoop()
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
-
-        if (mShowDemoWindow)
-            ImGui::ShowDemoWindow(&mShowDemoWindow);
-
+        
+        // Main UI
+        if (false == MainUI())
         {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &mShowDemoWindow);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &mShowAnotherWindow);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
+			ImGui::End();
+			done = true;
         }
-
-
+		
+        ImGui::ShowUserGuide();
 
         // Rendering
         ImGui::Render();
@@ -140,6 +234,11 @@ void DirectWindow::RunLoop()
 
         mRenderer->pSwapChain->Present(1, 0); // Present with vsync
     }
+
+	mRenderer->CleanupRenderTarget();
+	_CleanupImGui();
+	::DestroyWindow(mHwnd);
+	::UnregisterClassW(wc.lpszClassName, wc.hInstance);
 }
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
