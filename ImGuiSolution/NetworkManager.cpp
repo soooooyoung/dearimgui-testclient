@@ -25,6 +25,8 @@ bool NetworkManager::CreateNetwork()
 		return false;
 	}
 
+	mClient->Run();
+
 	return true;
 }
 

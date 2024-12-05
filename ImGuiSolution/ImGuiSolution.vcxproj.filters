@@ -31,6 +31,7 @@
     <ClCompile Include="NetworkClient.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="NetworkContext.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
@@ -72,6 +73,8 @@
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="App.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="NetworkContext.h" />
+    <ClInclude Include="SharedEnum.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\thirdparty\imgui\imgui.gdb">

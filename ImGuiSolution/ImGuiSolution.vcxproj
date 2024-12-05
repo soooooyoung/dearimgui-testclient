@@ -152,6 +152,7 @@
     <ClCompile Include="DirectWindow.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NetworkClient.cpp" />
+    <ClCompile Include="NetworkContext.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -169,8 +170,10 @@
     <ClInclude Include="D3D11Render.h" />
     <ClInclude Include="DirectWindow.h" />
     <ClInclude Include="NetworkClient.h" />
+    <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="NetworkPacket.h" />
+    <ClInclude Include="SharedEnum.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\thirdparty\imgui\imgui.gdb" />

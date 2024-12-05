@@ -1,8 +1,13 @@
 #include "NetworkClient.h"
 #include "NetworkPacket.h"
+#include "NetworkContext.h"
 
-NetworkClient::NetworkClient() : mSocket(INVALID_SOCKET)
+NetworkClient::NetworkClient() : 
+	mSocket(INVALID_SOCKET), 
+	mIsRunning(false), 
+	mReceiveContext(nullptr)
 {
+	mReceiveContext = std::make_unique<NetworkContext>();
 }
 
 NetworkClient::~NetworkClient()
@@ -30,8 +35,7 @@ bool NetworkClient::Initialize()
 		return false;
 	}
 
-	SOCKET sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, nullptr, 0, 0);
-
+	SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (sock == INVALID_SOCKET)
 	{
 		printf_s("Failed to create socket: %d\n", WSAGetLastError());
@@ -45,7 +49,6 @@ bool NetworkClient::Initialize()
 
 bool NetworkClient::Connect(const std::string& ipAddress, int port) 
 {
-
 	if (mSocket == INVALID_SOCKET)
 	{
 		return false;
@@ -76,7 +79,7 @@ bool NetworkClient::Connect(const std::string& ipAddress, int port)
 void NetworkClient::Run()
 {
 	mIsRunning = true;
-	mReceiveThread = std::thread(&NetworkClient::Receive, this);
+	mReceiveThread = std::thread(&NetworkClient::ReceiveThread, this);
 }
 
 bool NetworkClient::Send(const char* message)
@@ -104,59 +107,79 @@ bool NetworkClient::Send(const char* message)
 	return true;
 }
 
-bool NetworkClient::Receive() const
+bool NetworkClient::ReceiveThread()
 {
-	std::vector<uint8_t> buffer;
-	buffer.resize(MAX_BUFFER_SIZE);
-
-	while (true)
+	while (mIsRunning)
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-		// Resize buffer to receive more data if necessary
-		size_t currentSize = buffer.size();
-		buffer.resize(currentSize + 1024); // Arbitrary chunk size for receiving more data
-
-		// Read data from socket
-		int received = recv(mSocket, reinterpret_cast<char*>(buffer.data() + currentSize), buffer.size() - currentSize, 0);
-		if (received == SOCKET_ERROR)
+		if (false == Receive())
 		{
-			printf_s("Error receiving data: %d\n", WSAGetLastError());
-			return false;
+			Sleep(100);
 		}
+	}
 
-		if (received == 0)
-		{
-			printf_s("Connection closed by server\n");
-			return false;
-		}
+	return true;
+}
 
-		// Adjust buffer size to actual data received
-		buffer.resize(currentSize + received);
+bool NetworkClient::ProcessPacket()
+{
+	auto remainSize = mReceiveContext->GetDataSize();
 
-		// Check if we have enough data for a header
-		if (buffer.size() >= sizeof(NetworkPacket::PacketHeader))
-		{
-			// Interpret the header
-			auto packetHeader = reinterpret_cast<NetworkPacket::PacketHeader*>(buffer.data());
-			auto packetLength = packetHeader->BodyLength + sizeof(NetworkPacket::PacketHeader);
+	if (remainSize < sizeof(NetworkPacket::PacketHeader))
+	{
+		printf("PacketHeader Size Error\n");
+		return false;
+	}
 
-			// Check if the full packet has been received
-			if (buffer.size() >= packetLength)
-			{
-				auto packet = std::make_unique<NetworkPacket>();
-				packet->Header = *packetHeader;
-				std::memcpy(packet->Body.data(), buffer.data() + sizeof(NetworkPacket::PacketHeader), packetHeader->BodyLength);
+	auto packetHeader = reinterpret_cast<NetworkPacket::PacketHeader*>(mReceiveContext->GetReadBuffer());
+	auto packetLength = packetHeader->BodyLength + sizeof(NetworkPacket::PacketHeader);
 
-				printf_s("Received message: %s\n", packet->Body.data());
-				// TODO: Process packet
+	auto packet = std::make_unique<NetworkPacket>();
+	packet->Header = *packetHeader;
 
-				buffer.erase(buffer.begin(), buffer.begin() + packetLength);
+	if (remainSize < packetLength)
+	{
+		printf("PacketBody Size Error\n");
+		return false;
+	}
 
-				return true;
-			}
-		}
+	memcpy(packet->Body.data(), mReceiveContext->GetReadBuffer() + sizeof(NetworkPacket::PacketHeader), packet->GetBodySize());
 
+
+	if (false == mReceiveContext->Read(packet->GetPacketSize()))
+	{
+		printf("Read Error\n");
+		return false;
+	}
+
+	printf("Received Data: %s\n", packet->Body.data());
+
+	mReceivePackets.push_back(std::move(packet));
+}
+
+bool NetworkClient::Receive()
+{
+	auto result = recv(mSocket, reinterpret_cast<char*>(mReceiveContext->GetWriteBuffer()), mReceiveContext->GetRemainSize(), 0);
+
+	printf_s("Received Data: %d\n", result);
+
+	if (result == SOCKET_ERROR)
+	{
+		printf_s("Failed to receive data: %d\n", WSAGetLastError());
+		return false;
+	}
+
+	if (result == 0)
+	{
+		printf_s("Connection closed\n");
+		return false;
+	}
+
+	mReceiveContext->Write(result);
+
+	if (false == ProcessPacket())
+	{
+		printf("Failed to process packet\n");
+		return false;
 	}
 }
 

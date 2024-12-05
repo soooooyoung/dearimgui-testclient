@@ -91,14 +91,14 @@ bool DirectWindow::MainUI()
     ImGuiIO& io = ImGui::GetIO();
     ImVec2 displaySize = io.DisplaySize;
 
-    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f)); // place the next window in the top left corner (0,0)
+    //ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f)); // place the next window in the top left corner (0,0)
     ImGui::SetNextWindowSize(io.DisplaySize); // make the next window fullscreen
 
     ImGui::Begin(window_title,
         &mShowMainUI,
         ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_AlwaysAutoResize |
         0);
 
     ImVec2 button_size = ImVec2(ImGui::GetTextLineHeightWithSpacing(),
