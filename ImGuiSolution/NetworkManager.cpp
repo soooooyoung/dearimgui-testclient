@@ -24,6 +24,7 @@ bool NetworkManager::CreateNetwork()
 		return false;
 	}
 
+	// FIXME: Hardcoded IP and Port
 	if (false == mClient->Connect("127.0.0.1", 9000)) {
 		printf_s("Failed to connect to server\n");
 		return false;
@@ -49,7 +50,8 @@ void NetworkManager::OnReceivePacket(std::unique_ptr<NetworkPacket>&& packet)
 			if (mCommandCallback)
 			{
 				mCommandCallback(Command(CommandType::Receive, (char*)packet->Body.data()));
-				printf("Received Data: %s\n", packet->Body.data());
+
+				printf_s("Received: %s\n", packet->Body.data());
 			}
 			break;
 		}
