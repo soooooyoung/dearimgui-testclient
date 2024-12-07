@@ -28,14 +28,23 @@
     </ClCompile>
     <ClCompile Include="DirectWindow.cpp" />
     <ClCompile Include="D3D11Render.cpp" />
-    <ClCompile Include="NetworkClient.cpp" />
-    <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="App.cpp" />
-    <ClCompile Include="NetworkContext.cpp" />
+    <ClCompile Include="NetworkClient.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkContext.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkManager.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
       <UniqueIdentifier>{c1ec87c7-f54c-4c5a-ac5f-8d6f3a5c8ab5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{752d96c3-9544-4e0b-b1d7-a41f5455dd36}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -68,13 +77,21 @@
     </ClInclude>
     <ClInclude Include="DirectWindow.h" />
     <ClInclude Include="D3D11Render.h" />
-    <ClInclude Include="NetworkPacket.h" />
-    <ClInclude Include="NetworkClient.h" />
-    <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="App.h" />
     <ClInclude Include="Command.h" />
-    <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="SharedEnum.h" />
+    <ClInclude Include="NetworkClient.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkContext.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkManager.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkPacket.h">
+      <Filter>Network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\thirdparty\imgui\imgui.gdb">

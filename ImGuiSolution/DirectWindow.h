@@ -25,7 +25,7 @@ public:
 	std::function<void(Command&&)> mCommandCallback;
 
 	bool MainUI();
-	void StyleColorsDark();
+	void SetStyle();
 private:
 	bool _InitializeImGui();
 	void _CleanupImGui();
