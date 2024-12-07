@@ -8,6 +8,7 @@
 #include <MSWSock.h>
 #include <memory>
 #include <vector>
+#include <functional>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -30,12 +31,12 @@ public:
 
 	bool ProcessPacket();
 	bool ReceiveThread();
-private:
 
+	std::function<void(std::unique_ptr<NetworkPacket>&&)> mPacketCallback;
+private:
 	SOCKET mSocket;
 
 	std::unique_ptr<NetworkContext> mReceiveContext;
-	std::vector<std::unique_ptr<NetworkPacket>> mReceivePackets;
 	std::thread mReceiveThread;
 
 	bool mIsRunning = false;

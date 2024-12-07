@@ -126,7 +126,7 @@ bool NetworkClient::ProcessPacket()
 
 	if (remainSize < sizeof(NetworkPacket::PacketHeader))
 	{
-		printf("PacketHeader Size Error\n");
+		printf_s("PacketHeader Size Error\n");
 		return false;
 	}
 
@@ -138,7 +138,7 @@ bool NetworkClient::ProcessPacket()
 
 	if (remainSize < packetLength)
 	{
-		printf("PacketBody Size Error\n");
+		printf_s("PacketBody Size Error\n");
 		return false;
 	}
 
@@ -147,20 +147,16 @@ bool NetworkClient::ProcessPacket()
 
 	if (false == mReceiveContext->Read(packet->GetPacketSize()))
 	{
-		printf("Read Error\n");
+		printf_s("Read Error\n");
 		return false;
 	}
 
-	printf("Received Data: %s\n", packet->Body.data());
-
-	mReceivePackets.push_back(std::move(packet));
+	mPacketCallback(std::move(packet));
 }
 
 bool NetworkClient::Receive()
 {
 	auto result = recv(mSocket, reinterpret_cast<char*>(mReceiveContext->GetWriteBuffer()), mReceiveContext->GetRemainSize(), 0);
-
-	printf_s("Received Data: %d\n", result);
 
 	if (result == SOCKET_ERROR)
 	{
@@ -178,7 +174,7 @@ bool NetworkClient::Receive()
 
 	if (false == ProcessPacket())
 	{
-		printf("Failed to process packet\n");
+		printf_s("Failed to process packet\n");
 		return false;
 	}
 }

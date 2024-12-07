@@ -1,6 +1,7 @@
 #include "NetworkManager.h"
 #include "NetworkClient.h"
 #include "NetworkPacket.h"
+#include "Command.h"
 
 NetworkManager::NetworkManager() : mClient(nullptr)
 {
@@ -13,6 +14,9 @@ NetworkManager::~NetworkManager()
 bool NetworkManager::CreateNetwork()
 {
 	mClient = std::make_unique<NetworkClient>();
+	mClient->mPacketCallback = [this](std::unique_ptr<NetworkPacket>&& packet) {
+		OnReceivePacket(std::move(packet));
+		};
 
 	if (false == mClient->Initialize())
 	{
@@ -33,5 +37,22 @@ bool NetworkManager::CreateNetwork()
 bool NetworkManager::Send(const std::string& message) const
 {
 	return mClient->Send(message.c_str());
+}
+
+void NetworkManager::OnReceivePacket(std::unique_ptr<NetworkPacket>&& packet)
+{
+	switch ((ServiceProtocol)packet->Header.PacketID)
+	{
+		default:
+		case ServiceProtocol::ECHO:
+		{
+			if (mCommandCallback)
+			{
+				mCommandCallback(Command(CommandType::Receive, (char*)packet->Body.data()));
+				printf("Received Data: %s\n", packet->Body.data());
+			}
+			break;
+		}
+	}
 }
 

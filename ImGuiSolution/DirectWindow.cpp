@@ -61,13 +61,6 @@ bool DirectWindow::_InitializeImGui()
     // Setup Dear ImGui style
     SetStyle();
 
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    }
-
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(mHwnd);
     ImGui_ImplDX11_Init(mRenderer->pd3dDevice.Get(), mRenderer->pd3dDeviceContext.Get());
@@ -99,7 +92,7 @@ bool DirectWindow::MainUI()
     ImGuiWindowFlags window_flags = 0;
     window_flags |= ImGuiWindowFlags_NoTitleBar;
     window_flags |= ImGuiWindowFlags_NoMove;
-    window_flags |= ImGuiWindowFlags_NoResize;
+    window_flags |= ImGuiWindowFlags_AlwaysAutoResize;
 
     ImGui::Begin(window_title,
         NULL,
@@ -114,49 +107,36 @@ bool DirectWindow::MainUI()
         return false;
     }
 
-    ImGui::Text("Aligned");
-    ImGui::SameLine(150); ImGui::Text("x=150");
-    ImGui::SameLine(300); ImGui::Text("x=300");
-    ImGui::Text("Aligned");
-    ImGui::SameLine(150); ImGui::SmallButton("x=150");
-    ImGui::SameLine(300); ImGui::SmallButton("x=300");
-
-	if (ImGui::Button("X", button_size))
-	{
-		mShowMainUI = false;
-		return false;
-	}
-
-	ImGui::SameLine();
-	
-	if (ImGui::Button("Send", button_size))
-	{
-		if (mCommandCallback)
-		{
-			mCommandCallback(Command(CommandType::Send, "Hello World"));
-		}
-	}
-
     ImVec2 contentSize = ImGui::GetContentRegionAvail();
     if (contentSize.y < 500) contentSize.y = 500;
     {
-        if (ImGui::BeginTabBar("MyTabBar", ImGuiTabBarFlags_None))
+
+        if (ImGui::BeginChild("Child1", ImVec2(contentSize.x, 500), true))
         {
-            if (ImGui::BeginTabItem("Audio"))
-            {
-				ImGui::Text("Audio Panel");
-
-                ImGui::EndTabItem();
-            }
-            if (ImGui::BeginTabItem("Theme"))
-            {
-                ImGui::ShowStyleEditor();
-
-                ImGui::EndTabItem();
-            }
-            ImGui::EndTabBar();
-        }
+            // Chat Box
+			ImGui::Text("Chat Box");
+			ImGui::Separator();
+			for (const auto& chat : mChatHistory)
+			{
+				ImGui::Text(chat.c_str());
+			}
+			ImGui::EndChild();
+		}
+        
     }
+
+    static char buf[100] = "";
+    ImGui::InputText("1", buf, IM_ARRAYSIZE(buf));
+
+    ImGui::SameLine();
+	
+	if (ImGui::SmallButton("Send"))
+	{
+		if (mCommandCallback)
+		{
+			mCommandCallback(Command(CommandType::Send, buf));
+		}
+	}
 
 	ImGui::End();
 	return true;
@@ -175,6 +155,7 @@ void DirectWindow::SetStyle()
     style.TabBorderSize = 1.0f;
     style.TabRounding = 0.0f;
     style.WindowRounding = 4.0f;
+	style.CellPadding = ImVec2(0, 20);
 
     ImVec4* colors = style.Colors;
     colors[ImGuiCol_Text] = ImVec4(1.000f, 1.000f, 1.000f, 1.000f);

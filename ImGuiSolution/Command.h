@@ -6,7 +6,8 @@ enum class CommandType
 {
 	None,
 	Connect,
-	Send
+	Send,
+	Receive,
 };
 
 struct Command

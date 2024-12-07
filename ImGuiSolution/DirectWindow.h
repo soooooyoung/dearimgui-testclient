@@ -9,7 +9,7 @@
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 #include "Command.h"
-
+#include <vector>
 
 class D3D11Render;
 class DirectWindow
@@ -21,11 +21,16 @@ public:
 	bool Initialize();
 	void RunLoop();
 
-	D3D11Render* mRenderer;
-	std::function<void(Command&&)> mCommandCallback;
-
 	bool MainUI();
 	void SetStyle();
+
+	void PushChat(const std::string& chat)
+	{
+		mChatHistory.push_back(chat);
+	}
+
+	D3D11Render* mRenderer;
+	std::function<void(Command&&)> mCommandCallback;
 private:
 	bool _InitializeImGui();
 	void _CleanupImGui();
@@ -34,6 +39,8 @@ private:
 
 	HWND mHwnd = nullptr;
 	WNDCLASSEXW wc = {};
+
+	std::vector<std::string> mChatHistory;
 };
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

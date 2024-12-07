@@ -20,6 +20,7 @@ bool App::Initialize()
 		};
 
 	mDirectWindow->mCommandCallback = commandCallback;
+	mNetworkManager->mCommandCallback = commandCallback;	
 
 	if (false == mNetworkManager->CreateNetwork())
 	{
@@ -63,6 +64,11 @@ void App::CommandThread()
 
 		switch (command.Type)
 		{
+		case CommandType::Receive:
+		{
+			mDirectWindow->PushChat(command.Data);
+		}
+		break;
 		case CommandType::Send:
 		{
 			if (!mNetworkManager->Send(command.Data))
