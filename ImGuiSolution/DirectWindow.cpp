@@ -127,7 +127,7 @@ bool DirectWindow::MainUI()
 
 	static char buf[100] = "";
 	
-	if (ImGui::InputText("", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_EnterReturnsTrue))
+	if (ImGui::InputText("##InputText", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_EnterReturnsTrue))
 	{
 		if (mCommandCallback)
 		{
@@ -149,8 +149,6 @@ bool DirectWindow::MainUI()
 
 		memset(buf, 0, sizeof(buf));
 	}
-
-
 
 	ImGui::End();
 	return true;
