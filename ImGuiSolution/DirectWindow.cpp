@@ -75,7 +75,7 @@ void DirectWindow::_CleanupImGui()
 	ImGui::DestroyContext();
 }
 
-bool DirectWindow::MainUI()
+void DirectWindow::MainUI()
 {
 	const char* window_title = "Main Window";
 
@@ -102,16 +102,20 @@ bool DirectWindow::MainUI()
 	ImVec2 button_size = ImVec2(ImGui::GetTextLineHeightWithSpacing(),
 		ImGui::GetTextLineHeightWithSpacing());
 
-	if (!mShowMainUI)
-	{
-		return false;
-	}
+	ImGui::End();
+}
+
+void DirectWindow::ClientUI()
+{
+	ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
+
+	ImGui::Begin("ClientUI");
 
 	ImVec2 contentSize = ImGui::GetContentRegionAvail();
 	if (contentSize.y < 500) contentSize.y = 500;
 	{
 
-		if (ImGui::BeginChild("Child1", ImVec2(contentSize.x, 500), true))
+		if (ImGui::BeginChild("ChatBox", ImVec2(contentSize.x, contentSize.y - 25), true))
 		{
 			// Chat Box
 			ImGui::Text("Chat Box");
@@ -126,7 +130,8 @@ bool DirectWindow::MainUI()
 	}
 
 	static char buf[100] = "";
-	
+
+	ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 100);
 	if (ImGui::InputText("##InputText", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_EnterReturnsTrue))
 	{
 		if (mCommandCallback)
@@ -138,9 +143,11 @@ bool DirectWindow::MainUI()
 		ImGui::SetKeyboardFocusHere(-1);	// Auto focus on the next widget
 	}
 
+	ImGui::PopItemWidth();
+
 	ImGui::SameLine();
 
-	if (ImGui::SmallButton("Send"))
+	if (ImGui::Button("Send", ImVec2(100 - ImGui::GetStyle().ItemSpacing.x, 0)))
 	{
 		if (mCommandCallback)
 		{
@@ -151,7 +158,6 @@ bool DirectWindow::MainUI()
 	}
 
 	ImGui::End();
-	return true;
 }
 
 void DirectWindow::SetStyle()
@@ -253,13 +259,10 @@ void DirectWindow::RunLoop()
 		ImGui::NewFrame();
 
 		// Main UI
-		if (false == MainUI())
-		{
-			ImGui::End();
-			done = true;
-		}
+		MainUI();
 
-		//ImGui::ShowUserGuide();
+		// Client UI
+		ClientUI();
 
 		// Rendering
 		ImGui::Render();

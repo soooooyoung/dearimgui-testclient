@@ -21,7 +21,8 @@ public:
 	bool Initialize();
 	void RunLoop();
 
-	bool MainUI();
+	void MainUI();
+	void ClientUI();
 	void SetStyle();
 
 	void PushChat(const std::string& chat)
