@@ -105,7 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>..\thirdparty\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\thirdparty;..\thirdparty\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -148,8 +148,10 @@
     <ClCompile Include="..\thirdparty\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\thirdparty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="ConfigLoader.cpp" />
     <ClCompile Include="D3D11Render.cpp" />
     <ClCompile Include="DirectWindow.cpp" />
+    <ClCompile Include="JSON.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NetworkClient.cpp" />
     <ClCompile Include="NetworkContext.cpp" />
@@ -167,8 +169,10 @@
     <ClInclude Include="..\thirdparty\imgui\imstb_truetype.h" />
     <ClInclude Include="App.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="ConfigLoader.h" />
     <ClInclude Include="D3D11Render.h" />
     <ClInclude Include="DirectWindow.h" />
+    <ClInclude Include="JSON.h" />
     <ClInclude Include="NetworkClient.h" />
     <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkManager.h" />
@@ -178,6 +182,7 @@
   <ItemGroup>
     <None Include="..\thirdparty\imgui\imgui.gdb" />
     <None Include="..\thirdparty\imgui\imgui.natstepfilter" />
+    <None Include="config.json" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\thirdparty\imgui\imgui.natvis" />

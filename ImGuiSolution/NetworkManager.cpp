@@ -9,6 +9,7 @@ NetworkManager::NetworkManager() : mClient(nullptr)
 
 NetworkManager::~NetworkManager()
 {
+	DestroyNetwork();
 }
 
 bool NetworkManager::CreateNetwork()
@@ -33,6 +34,18 @@ bool NetworkManager::CreateNetwork()
 	mClient->Run();
 
 	return true;
+}
+
+void NetworkManager::DestroyNetwork()
+{
+	for (auto& client : mClientList)
+	{
+		client.reset();
+	}
+
+	mClientList.clear();
+
+	WSACleanup();
 }
 
 bool NetworkManager::Send(const std::string& message) const
