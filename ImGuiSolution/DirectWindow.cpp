@@ -124,6 +124,9 @@ void DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 
 	auto clientPtr = client.lock();
 
+	if (!clientPtr->IsConnected())
+		return;
+
 	ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
 
 	auto clientSession = std::to_string(clientPtr->GetSessionID());

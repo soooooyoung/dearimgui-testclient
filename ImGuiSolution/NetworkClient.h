@@ -29,6 +29,8 @@ public:
 	int GetSessionID() const { return mSessionID; }
 	void SetSessionID(int sessionID) { mSessionID = sessionID; }
 
+	bool IsConnected() const { return mIsConnected; }
+
 	bool Initialize();
 
 	bool PostConnect(const std::string& ipAddress, int port);
