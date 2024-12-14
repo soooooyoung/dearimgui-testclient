@@ -39,7 +39,7 @@ public:
 	
 	bool IsConnected() const { return mIsConnected; }
 
-	std::unique_ptr<NetworkPacket> GetPacket();
+
 	std::unique_ptr<NetworkContext>& GetSendContext() { return mSendContext; }	
 
 	std::function<void(std::unique_ptr<NetworkPacket>&&)> mPacketCallback;

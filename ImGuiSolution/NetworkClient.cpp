@@ -161,41 +161,6 @@ bool NetworkClient::Send()
 	return true;
 }
 
-std::unique_ptr<NetworkPacket> NetworkClient::GetPacket()
-{
-
-	auto remainSize = mReceiveContext->GetDataSize();
-
-	if (remainSize < sizeof(NetworkPacket::PacketHeader))
-	{
-		printf("PacketHeader Size Error\n");
-		return nullptr;
-	}
-
-	auto packetHeader = reinterpret_cast<NetworkPacket::PacketHeader*>(mReceiveContext->GetReadBuffer());
-	auto packetLength = packetHeader->BodyLength + sizeof(NetworkPacket::PacketHeader);
-
-	auto packet = std::make_unique<NetworkPacket>();
-	packet->Header = *packetHeader;
-
-	if (remainSize < packetLength)
-	{
-		printf("PacketBody Size Error\n");
-		return nullptr;
-	}
-
-	memcpy(packet->Body.data(), mReceiveContext->GetReadBuffer() + sizeof(NetworkPacket::PacketHeader), packet->GetBodySize());
-
-
-	if (false == mReceiveContext->Read(packet->GetPacketSize()))
-	{
-		printf("Read Error\n");
-		return nullptr;
-	}
-
-	return packet;
-}
-
 bool NetworkClient::ProcessPacket()
 {
 	auto remainSize = mReceiveContext->GetDataSize();

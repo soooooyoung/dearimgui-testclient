@@ -139,9 +139,9 @@ void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& conte
 		return;
 	}
 
-	if (false == context.Read(transferred))
+	if (false == client.ProcessPacket())
 	{
-		printf_s("_HandleSend Error: Failed to Read\n");
+		printf_s("_HandleSend Error: Failed to ProcessPacket\n");
 		return;
 	}
 }
