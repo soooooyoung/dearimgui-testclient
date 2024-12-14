@@ -148,5 +148,6 @@ void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& conte
 
 void NetworkManager::_HandleSend(NetworkClient& client, NetworkContext& context, int transferred)
 {
+	context.ResetBuffer();
 }
 

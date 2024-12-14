@@ -122,8 +122,10 @@ bool NetworkClient::OnConnect()
 	}
 }
 
-bool NetworkClient::Send(const char* message)
+bool NetworkClient::Send()
 {
+	const char* message = (char*)mSendContext->GetWriteBuffer();
+
 	NetworkPacket packet;
 	packet.Header.PacketID = 1;
 	packet.Header.BodyLength = strlen(message);
@@ -133,6 +135,7 @@ bool NetworkClient::Send(const char* message)
 
 	mSendContext->ClearOverlapped();
 	mSendContext->mContextType = ContextType::SEND;
+
 	mSendContext->Write(packet);
 
 	DWORD dwSendNumBytes = 0;

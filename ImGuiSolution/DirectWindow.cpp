@@ -156,22 +156,15 @@ void DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 	}
 
 	auto& sendContext = clientPtr->GetSendContext();
-	auto buf = (char*)sendContext->GetWriteBuffer();
 
 	ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 100);
 	if (ImGui::InputText(inputTitle,
-		buf,
+		(char*)sendContext->GetWriteBuffer(),
 		sendContext->GetRemainSize(),
 		ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		clientPtr->Send(buf);
+		clientPtr->Send();
 
-		//if (mCommandCallback)
-		//{
-		//	mCommandCallback(Command(CommandType::Send, (char*)utf8InputText.c_str()));
-		//}
-
-		sendContext->ResetBuffer();
 		ImGui::SetKeyboardFocusHere(-1);	// Auto focus on the next widget
 	}
 
@@ -181,13 +174,7 @@ void DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 
 	if (ImGui::Button("Send", ImVec2(100 - ImGui::GetStyle().ItemSpacing.x, 0)))
 	{
-		clientPtr->Send(buf);
-
-		//if (mCommandCallback)
-		//{
-		//	mCommandCallback(Command(CommandType::Send, (char*)inputText.c_str()));
-		//}
-		sendContext->ResetBuffer();
+		clientPtr->Send();
 	}
 
 	ImGui::End();

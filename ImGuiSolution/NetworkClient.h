@@ -24,28 +24,25 @@ public:
 	NetworkClient();
 	virtual ~NetworkClient();
 
+	bool Initialize();
+	bool PostConnect(const std::string& ipAddress, int port);
+	bool OnConnect();
+	bool Receive();
+	bool Send();
+
+	bool ProcessPacket();
+
 	SOCKET GetSocket() const { return mSocket; }
 
 	int GetSessionID() const { return mSessionID; }
 	void SetSessionID(int sessionID) { mSessionID = sessionID; }
-
+	
 	bool IsConnected() const { return mIsConnected; }
 
-	bool Initialize();
-
-	bool PostConnect(const std::string& ipAddress, int port);
-	bool OnConnect();
-
-	bool Receive();
-	bool Send(const char* message);
-
-	bool ProcessPacket();
-
 	std::unique_ptr<NetworkPacket> GetPacket();
+	std::unique_ptr<NetworkContext>& GetSendContext() { return mSendContext; }	
 
 	std::function<void(std::unique_ptr<NetworkPacket>&&)> mPacketCallback;
-
-	std::unique_ptr<NetworkContext>& GetSendContext() { return mSendContext; }	
 private:
 	bool mIsConnected = false;
 	int mSessionID = 0;
