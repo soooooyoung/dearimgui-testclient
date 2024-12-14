@@ -17,3 +17,25 @@ Include Dear ImGUI's Implementations for:
 - **imgui.natvis** (support for `Visual Studio Debugger`, describe Dear ImGui types for better display)
 
 ImGUI is small enough to include its files directly.
+
+### [DirectWindow](ImGuiSolution/DirectWindow.h)
+
+`DirectWindow` integrates Dear ImGui's rendering loop and manages the application's main window and UI rendering.
+
+## Integrating Network Operations
+
+Most network operations adhere to general practices from the testing server, leveraging reusable code.
+
+### [Network Manager](/ImGuiSolution/NetworkManager.h)
+
+The NetworkManager class initializes Winsock and creates an I/O Completion Port (IOCP) fo to enable efficient asynchronous networking.
+
+### [Client Connections](/ImGuiSolution/NetworkClient.h)
+
+The `NetworkClient` instance is added upon AddConnection comman. Each handles individual client network operations, utilizing `ConnectEx` for non-blocking connection establishment.
+
+## Command Handling
+
+`DirectWindow` invokes commands via a callback, linking UI actions (e.g., button clicks) to network operations.
+
+Commands such as Connect are then queued and processed sequentially in the `MainLoop()` of [App](ImGuiSolution/App.h), ensuring all commands are handled before the next render cycle to prevent race conditions.
