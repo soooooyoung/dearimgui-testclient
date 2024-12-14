@@ -1,9 +1,9 @@
-#include "NetworkManager.h"
-#include "NetworkClient.h"
+﻿#include "NetworkManager.h"
 #include "NetworkPacket.h"
+#include "NetworkContext.h"
 #include "Command.h"
 
-NetworkManager::NetworkManager() : mClient(nullptr)
+NetworkManager::NetworkManager() 
 {
 }
 
@@ -13,48 +13,135 @@ NetworkManager::~NetworkManager()
 
 bool NetworkManager::CreateNetwork()
 {
-	mClient = std::make_unique<NetworkClient>();
-	mClient->mPacketCallback = [this](std::unique_ptr<NetworkPacket>&& packet) {
-		OnReceivePacket(std::move(packet));
-		};
-
-	if (false == mClient->Initialize())
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
-		printf_s("Failed to initialize network client\n");
 		return false;
 	}
 
-	// FIXME: Hardcoded IP and Port
-	if (false == mClient->Connect("127.0.0.1", 9000)) {
-		printf_s("Failed to connect to server\n");
+	SYSTEM_INFO systemInfo;
+
+	GetSystemInfo(&systemInfo);
+	int ioThreadCount = systemInfo.dwNumberOfProcessors * 2;
+
+	mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, ioThreadCount);
+
+	if (NULL == mIOCPHandle)
+	{
+		printf_s("CreateIoCompletionPort() Error: %d\n", GetLastError());
 		return false;
 	}
 
-	mClient->Run();
+	mIsRunning = true;
+
+	for (int i = 0; i < ioThreadCount; ++i)
+	{
+		mIOThreadPool.emplace_back([this]() { WorkerThread(); });
+	}
+
 
 	return true;
 }
 
-bool NetworkManager::Send(const std::string& message) const
+std::shared_ptr<NetworkClient> NetworkManager::AddClient()
 {
-	return mClient->Send(message.c_str());
+	auto client = std::make_shared<NetworkClient>();
+
+	if (false == client->Initialize())
+	{
+		return nullptr;
+	}
+
+	auto hIOCP = CreateIoCompletionPort((HANDLE)client->GetSocket(), mIOCPHandle, (ULONG_PTR)client.get(), 0);
+
+	if (NULL == hIOCP)
+	{
+		printf_s("CreateIoCompletionPort() Error: %d\n", GetLastError());
+		return nullptr;
+	}
+
+	return client;
 }
 
-void NetworkManager::OnReceivePacket(std::unique_ptr<NetworkPacket>&& packet)
+void NetworkManager::WorkerThread()
 {
-	switch ((ServiceProtocol)packet->Header.PacketID)
-	{
-		default:
-		case ServiceProtocol::ECHO:
-		{
-			if (mCommandCallback)
-			{
-				mCommandCallback(Command(CommandType::Receive, (char*)packet->Body.data()));
+	BOOL bSuccess = TRUE;
+	DWORD dwIoSize = 0;
+	ULONG_PTR key = 0;
+	LPOVERLAPPED lpOverlapped = NULL;
 
-				printf_s("Received: %s\n", packet->Body.data());
-			}
-			break;
+	while (mIsRunning)
+	{
+		bSuccess = GetQueuedCompletionStatus(mIOCPHandle, &dwIoSize, &key, &lpOverlapped, INFINITE);
+
+		if (TRUE == bSuccess && 0 == dwIoSize && NULL == lpOverlapped)
+		{
+			mIsRunning = false;
+			printf_s("WorkerThread Exit\n");
+			continue;
+		}
+
+		if (nullptr == lpOverlapped)
+		{
+			printf_s("Invalid Overlapped\n");
+			continue;
+		}
+
+		auto client = (NetworkClient*)key;
+		auto context = (NetworkContext*)lpOverlapped;
+
+		if (FALSE == bSuccess)
+		{
+			printf_s("WorkerThread Fail: %d\n", WSAGetLastError());
+			continue;
+		}
+
+		switch (context->mContextType)
+		{
+		case ContextType::CONNECT:
+		{
+			_HandleConnect(*client, *context, dwIoSize);
+		}
+		case ContextType::RECV:
+		{
+			_HandleReceive(*client, *context, dwIoSize);
+		}
+		break;
+		case ContextType::SEND:
+		{
+			_HandleSend(*client, *context, dwIoSize);
+		}
+		break;
+		default:
+		{
+			printf("Unknown Context Type\n");
+		}
+		break;
 		}
 	}
+}
+
+void NetworkManager::_HandleConnect(NetworkClient& client, NetworkContext& context, int transferred)
+{
+
+}
+
+void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& context, int transferred)
+{
+	if (transferred <= 0)
+	{
+		printf_s("_HandleSend Error: %d\n", WSAGetLastError());
+		return;
+	}
+
+	if (false == context.Read(transferred))
+	{
+		printf_s("_HandleSend Error: Failed to Read\n");
+		return;
+	}
+}
+
+void NetworkManager::_HandleSend(NetworkClient& client, NetworkContext& context, int transferred)
+{
 }
 

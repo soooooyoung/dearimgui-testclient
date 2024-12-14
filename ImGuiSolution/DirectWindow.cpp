@@ -1,6 +1,7 @@
+﻿#include "NetworkClient.h"
 #include "DirectWindow.h"
-#include "D3D11Render.h"
 #include "Command.h"
+#include "StringUtil.h"
 
 static UINT  g_ResizeWidth = 0, g_ResizeHeight = 0;
 
@@ -56,7 +57,10 @@ bool DirectWindow::_InitializeImGui()
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 	io.ConfigViewportsNoAutoMerge = true;
-	//io.ConfigViewportsNoTaskBarIcon = true;
+
+	// Setup Font
+	io.Fonts->Clear();
+	ImFont* font = io.Fonts->AddFontFromFileTTF("fonts/hoon.ttf", 16.0f);
 
 	// Setup Dear ImGui style
 	SetStyle();
@@ -102,14 +106,27 @@ void DirectWindow::MainUI()
 	ImVec2 button_size = ImVec2(ImGui::GetTextLineHeightWithSpacing(),
 		ImGui::GetTextLineHeightWithSpacing());
 
+	if (ImGui::Button("Add Client", ImVec2(100 - ImGui::GetStyle().ItemSpacing.x, 0)))
+	{
+		if (mCommandCallback)
+		{
+			mCommandCallback(Command(CommandType::Connect, nullptr));
+		}
+	}
+
 	ImGui::End();
 }
 
-void DirectWindow::ClientUI()
+void DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 {
+	if (client.expired())
+		return;
+
+	auto clientPtr = client.lock();
+
 	ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
 
-	ImGui::Begin("ClientUI");
+	ImGui::Begin("ClientWindow");
 
 	ImVec2 contentSize = ImGui::GetContentRegionAvail();
 	if (contentSize.y < 500) contentSize.y = 500;
@@ -132,14 +149,16 @@ void DirectWindow::ClientUI()
 	static char buf[100] = "";
 
 	ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 100);
-	if (ImGui::InputText("##InputText", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_EnterReturnsTrue))
+	if (ImGui::InputText("##InputText", buf, IM_ARRAYSIZE(buf),ImGuiInputTextFlags_EnterReturnsTrue))
 	{
-		if (mCommandCallback)
-		{
-			mCommandCallback(Command(CommandType::Send, buf));
-		}
-		memset(buf, 0, sizeof(buf));
+		clientPtr->Send(buf);
 
+		//if (mCommandCallback)
+		//{
+		//	mCommandCallback(Command(CommandType::Send, (char*)utf8InputText.c_str()));
+		//}
+
+		memset(buf, 0, sizeof(buf));
 		ImGui::SetKeyboardFocusHere(-1);	// Auto focus on the next widget
 	}
 
@@ -149,10 +168,12 @@ void DirectWindow::ClientUI()
 
 	if (ImGui::Button("Send", ImVec2(100 - ImGui::GetStyle().ItemSpacing.x, 0)))
 	{
-		if (mCommandCallback)
-		{
-			mCommandCallback(Command(CommandType::Send, buf));
-		}
+		clientPtr->Send(buf);
+
+		//if (mCommandCallback)
+		//{
+		//	mCommandCallback(Command(CommandType::Send, (char*)inputText.c_str()));
+		//}
 
 		memset(buf, 0, sizeof(buf));
 	}
@@ -229,58 +250,46 @@ void DirectWindow::SetStyle()
 
 }
 
-void DirectWindow::RunLoop()
+void DirectWindow::Draw()
 {
-	bool done = false;
-	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-	while (!done)
+	MSG msg;
+	while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
 	{
-		MSG msg;
-		while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
-		{
-			::TranslateMessage(&msg);
-			::DispatchMessage(&msg);
-			if (msg.message == WM_QUIT)
-				done = true;
-		}
-		if (done)
-			break;
-
-		if (g_ResizeWidth != 0 && g_ResizeHeight != 0)
-		{
-			mRenderer->Resize(g_ResizeWidth, g_ResizeHeight);
-			g_ResizeWidth = g_ResizeHeight = 0;
-			mRenderer->CreateRenderTarget();
-		}
-
-		ImGui_ImplDX11_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-
-		// Main UI
-		MainUI();
-
-		// Client UI
-		ClientUI();
-
-		// Rendering
-		ImGui::Render();
-		const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-		mRenderer->Render(clear_color_with_alpha);
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-		// Update and Render additional Platform Windows
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
-
-		mRenderer->pSwapChain->Present(1, 0); // Present with vsync
+		::TranslateMessage(&msg);
+		::DispatchMessage(&msg);
 	}
 
-	mRenderer->CleanupRenderTarget();
-	_CleanupImGui();
-	::DestroyWindow(mHwnd);
-	::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+	if (g_ResizeWidth != 0 && g_ResizeHeight != 0)
+	{
+		mRenderer->Resize(g_ResizeWidth, g_ResizeHeight);
+		g_ResizeWidth = g_ResizeHeight = 0;
+		mRenderer->CreateRenderTarget();
+	}
+
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	// Main UI
+	MainUI();
+
+	// Client Windows
+	for (auto& client : mClientList)
+	{
+		ClientWindow(client);
+	}
+
+	// Rendering
+	ImGui::Render();
+	const float clear_color_with_alpha[4] = { mClearColor.x * mClearColor.w, mClearColor.y * mClearColor.w, mClearColor.z * mClearColor.w, mClearColor.w };
+	mRenderer->Render(clear_color_with_alpha);
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+	// Update and Render additional Platform Windows
+	ImGui::UpdatePlatformWindows();
+	ImGui::RenderPlatformWindowsDefault();
+
+	mRenderer->pSwapChain->Present(1, 0); // Present with vsync
 }
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

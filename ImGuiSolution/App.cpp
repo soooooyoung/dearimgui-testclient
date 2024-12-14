@@ -1,6 +1,8 @@
-#include "App.h"
+﻿#include "App.h"
+#include "NetworkClient.h"
 #include "NetworkManager.h"
 #include "DirectWindow.h"
+#include "ConfigLoader.h"
 
 App::App()
 {
@@ -14,13 +16,11 @@ App::~App()
 
 bool App::Initialize()
 {
-
 	auto commandCallback = [this](Command&& command) {
-		PushCommand(std::move(command)); 
+		PushCommand(std::move(command));
 		};
 
 	mDirectWindow->mCommandCallback = commandCallback;
-	mNetworkManager->mCommandCallback = commandCallback;	
 
 	if (false == mNetworkManager->CreateNetwork())
 	{
@@ -37,53 +37,75 @@ bool App::Initialize()
 void App::Run()
 {
 	mRunning = true;
-	mCommandThread = std::thread(&App::CommandThread, this);
-	mDirectWindow->RunLoop();
+	mMainThread = std::thread(&App::MainLoop, this);
+}
+
+void App::MainLoop()
+{
+	while (mRunning)
+	{
+		if (!ProcessCommand())
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
+		mDirectWindow->Draw();
+	}
 }
 
 void App::Shutdown()
 {
 	mRunning = false;
-	if (mCommandThread.joinable())
+	if (mMainThread.joinable())
 	{
-		mCommandThread.join();
+		mMainThread.join();
 	}
 }
 
-void App::CommandThread()
+bool App::ProcessCommand()
 {
-	while (mRunning)
+	if (mCommandQueue.empty())
 	{
-		if (mCommandQueue.empty())
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));	
-			continue;
-		}
-
-		auto& command = mCommandQueue.front();
-
-		switch (command.Type)
-		{
-		case CommandType::Receive:
-		{
-			mDirectWindow->PushChat(command.Data);
-		}
-		break;
-		case CommandType::Send:
-		{
-			if (!mNetworkManager->Send(command.Data))
-			{
-				printf("Failed to send message\n");
-			}
-		}
-			break;
-		default:
-			break;
-		}
-
-		mCommandQueue.pop();
+		return false;
 	}
 
+	auto& command = mCommandQueue.front();
+
+	switch (command.Type)
+	{
+	case CommandType::Connect:
+	{
+		auto client = mNetworkManager->AddClient();
+
+		if (nullptr == client)
+		{
+			printf("Failed to add client\n");
+		}
+
+		mClientList.push_back(client);
+		mDirectWindow->PushClient(client);
+
+		auto& clientConfig = ConfigLoader::GetInstance().GetClientConfig();
+		client->PostConnect(clientConfig.mServerAddress, clientConfig.mServerPort);
+	}
+	break;
+	//case CommandType::Receive:
+	//{
+	//	mDirectWindow->PushChat(command.Data);
+	//}
+	//break;
+	//case CommandType::Send:
+	//{
+
+	//}
+	break;
+	default:
+		break;
+	}
+
+	mCommandQueue.pop();
+
+	return true;
 }
 
 void App::PushCommand(Command&& command)

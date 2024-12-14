@@ -1,4 +1,4 @@
-#include "D3D11Render.h"
+﻿#include "D3D11Render.h"
 
 
 void D3D11Render::Render(const float clear_color[4]) {

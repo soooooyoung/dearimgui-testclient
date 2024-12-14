@@ -1,18 +1,21 @@
-#pragma once
+﻿#pragma once
+#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "mswsock.lib")
+
+#define WIN32_LEAN_AND_MEAN
 
 #include <WinSock2.h>
+#include <ws2tcpip.h>
+#include <mswsock.h>
+#include <Windows.h>
+
 #include <string>
 #include <iostream>
-#include <WS2tcpip.h>
 #include <thread>
-#include <MSWSock.h>
 #include <memory>
 #include <vector>
 #include <functional>
 
-#pragma comment(lib, "ws2_32.lib")
-
-const int MAX_BUFFER_SIZE = 8192;
 
 struct NetworkPacket;
 class NetworkContext;
@@ -22,22 +25,27 @@ public:
 	NetworkClient();
 	virtual ~NetworkClient();
 
+	SOCKET GetSocket() const { return mSocket; }
+
 	bool Initialize();
-	bool Connect(const std::string& ipAddress, int port);
-	void Run();
+
+	bool PostConnect(const std::string& ipAddress, int port);
+	bool OnConnect();
 
 	bool Receive();
 	bool Send(const char* message);
 
 	bool ProcessPacket();
-	bool ReceiveThread();
+
+	std::unique_ptr<NetworkPacket> GetPacket();
 
 	std::function<void(std::unique_ptr<NetworkPacket>&&)> mPacketCallback;
 private:
+	bool mIsConnected = false;
 	SOCKET mSocket;
 
-	std::unique_ptr<NetworkContext> mReceiveContext;
-	std::thread mReceiveThread;
+	uint32_t mSessionID = 0;
 
-	bool mIsRunning = false;
+	std::unique_ptr<NetworkContext> mReceiveContext;
+	std::unique_ptr<NetworkContext> mSendContext;
 };

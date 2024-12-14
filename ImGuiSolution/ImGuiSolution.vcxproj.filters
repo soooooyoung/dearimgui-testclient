@@ -38,6 +38,12 @@
     <ClCompile Include="NetworkManager.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="ConfigLoader.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
+    <ClCompile Include="JSON.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">
@@ -45,6 +51,12 @@
     </Filter>
     <Filter Include="Network">
       <UniqueIdentifier>{752d96c3-9544-4e0b-b1d7-a41f5455dd36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{5521f851-f9e6-409c-bdab-05556deb0d8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Config">
+      <UniqueIdentifier>{58603b92-3c36-4786-88cb-d47d425ddc80}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -92,6 +104,15 @@
     <ClInclude Include="NetworkPacket.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="StringUtil.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigLoader.h">
+      <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="JSON.h">
+      <Filter>Config</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\thirdparty\imgui\imgui.gdb">
@@ -99,6 +120,9 @@
     </None>
     <None Include="..\thirdparty\imgui\imgui.natstepfilter">
       <Filter>imgui</Filter>
+    </None>
+    <None Include="config.json">
+      <Filter>Config</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

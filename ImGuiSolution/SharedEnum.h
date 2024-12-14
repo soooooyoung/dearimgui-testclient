@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 
 enum class ContextType
 {
 	NONE,
-	ACCEPT,
+	CONNECT,
 	RECV,
 	SEND,
 };

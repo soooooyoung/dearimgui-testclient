@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "SharedEnum.h"
 #include <WinSock2.h>
 #include <memory>
