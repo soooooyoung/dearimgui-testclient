@@ -3,6 +3,7 @@
 #include <WinSock2.h>
 #include <memory>
 #include <span>
+#include <array>
 
 struct NetworkPacket;
 class NetworkContext : public std::enable_shared_from_this<NetworkContext>, public OVERLAPPED

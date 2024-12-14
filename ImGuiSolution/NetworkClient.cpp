@@ -1,6 +1,5 @@
 ﻿#include "NetworkClient.h"
 #include "NetworkPacket.h"
-#include "NetworkContext.h"
 
 NetworkClient::NetworkClient() :
 	mSocket(INVALID_SOCKET),

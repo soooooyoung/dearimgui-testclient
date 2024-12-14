@@ -34,19 +34,26 @@ bool App::Initialize()
 	return true;
 }
 
-void App::Run()
-{
-	mRunning = true;
-	mMainThread = std::thread(&App::MainLoop, this);
-}
-
 void App::MainLoop()
 {
+	mRunning = true;
+	mCommandThread = std::thread([this]() {
+		while (mRunning)
+		{
+			std::lock_guard<std::mutex> lock(mCommandLock);
+
+			if (false == ProcessCommand())
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			}
+		}
+		});
+
 	while (mRunning)
 	{
-		if (!ProcessCommand())
+		if (!mCommandQueue.empty())
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			std::this_thread::yield();
 		}
 
 		mDirectWindow->Draw();
@@ -56,9 +63,9 @@ void App::MainLoop()
 void App::Shutdown()
 {
 	mRunning = false;
-	if (mMainThread.joinable())
+	if (mCommandThread.joinable())
 	{
-		mMainThread.join();
+		mCommandThread.join();
 	}
 }
 
@@ -82,10 +89,15 @@ bool App::ProcessCommand()
 			printf("Failed to add client\n");
 		}
 
+		client->SetSessionID(mClientList.size());
+
 		mClientList.push_back(client);
 		mDirectWindow->PushClient(client);
 
 		auto& clientConfig = ConfigLoader::GetInstance().GetClientConfig();
+		printf_s("Server Address: %s\n", clientConfig.mServerAddress.c_str());
+		printf_s("Server Port: %d\n", clientConfig.mServerPort);
+
 		client->PostConnect(clientConfig.mServerAddress, clientConfig.mServerPort);
 	}
 	break;

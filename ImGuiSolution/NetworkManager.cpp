@@ -3,7 +3,7 @@
 #include "NetworkContext.h"
 #include "Command.h"
 
-NetworkManager::NetworkManager() 
+NetworkManager::NetworkManager() : mIOCPHandle(NULL), mIsRunning(false)
 {
 }
 
@@ -102,6 +102,7 @@ void NetworkManager::WorkerThread()
 		{
 			_HandleConnect(*client, *context, dwIoSize);
 		}
+		break;
 		case ContextType::RECV:
 		{
 			_HandleReceive(*client, *context, dwIoSize);
@@ -123,7 +124,11 @@ void NetworkManager::WorkerThread()
 
 void NetworkManager::_HandleConnect(NetworkClient& client, NetworkContext& context, int transferred)
 {
-
+	if (false == client.OnConnect())
+	{
+		printf_s("_HandleConnect Error: Failed to Connect\n");
+		return;
+	}
 }
 
 void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& context, int transferred)

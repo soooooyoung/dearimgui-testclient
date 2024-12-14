@@ -126,7 +126,13 @@ void DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 
 	ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
 
-	ImGui::Begin("ClientWindow");
+	auto clientSession = std::to_string(clientPtr->GetSessionID());
+    std::string windowTitleStr = "##Client " + clientSession;
+    const char* windowTitle = windowTitleStr.c_str();
+    std::string inputTitleStr = "##Input " + clientSession;
+    const char* inputTitle = inputTitleStr.c_str();
+
+	ImGui::Begin(windowTitle);
 
 	ImVec2 contentSize = ImGui::GetContentRegionAvail();
 	if (contentSize.y < 500) contentSize.y = 500;
@@ -146,10 +152,14 @@ void DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 
 	}
 
-	static char buf[100] = "";
+	auto& sendContext = clientPtr->GetSendContext();
+	auto buf = (char*)sendContext->GetWriteBuffer();
 
 	ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 100);
-	if (ImGui::InputText("##InputText", buf, IM_ARRAYSIZE(buf),ImGuiInputTextFlags_EnterReturnsTrue))
+	if (ImGui::InputText(inputTitle,
+		buf,
+		sendContext->GetRemainSize(),
+		ImGuiInputTextFlags_EnterReturnsTrue))
 	{
 		clientPtr->Send(buf);
 
@@ -158,7 +168,7 @@ void DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 		//	mCommandCallback(Command(CommandType::Send, (char*)utf8InputText.c_str()));
 		//}
 
-		memset(buf, 0, sizeof(buf));
+		sendContext->ResetBuffer();
 		ImGui::SetKeyboardFocusHere(-1);	// Auto focus on the next widget
 	}
 
@@ -174,8 +184,7 @@ void DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 		//{
 		//	mCommandCallback(Command(CommandType::Send, (char*)inputText.c_str()));
 		//}
-
-		memset(buf, 0, sizeof(buf));
+		sendContext->ResetBuffer();
 	}
 
 	ImGui::End();
@@ -273,10 +282,12 @@ void DirectWindow::Draw()
 	// Main UI
 	MainUI();
 
-	// Client Windows
-	for (auto& client : mClientList)
+	if (!mClientList.empty())
 	{
-		ClientWindow(client);
+		for (auto& client : mClientList)
+		{
+			ClientWindow(client);
+		}
 	}
 
 	// Rendering
