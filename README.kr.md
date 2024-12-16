@@ -24,8 +24,10 @@ Dear ImGUI는 크기가 작아 DLL로 분리하지 않고 파일을 직접 포�
 
 ## 네트워크 작업 통합
 
-<image src="images/brainfunction.jpg" width=40%/>
-<image src="images/advantage.jpg" width=40%/>
+<div style="display:flex">
+<image src="images/brainfunction.jpg" width=200/>
+<image src="images/advantage.jpg" width=200/>
+</div>
 
 대부분의 네트워크 작업은 테스트 서버의 재사용 가능한 코드를 기반으로 유사한 방식으로 동작합니다.
 
