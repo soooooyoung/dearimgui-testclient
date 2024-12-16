@@ -41,6 +41,4 @@ Dear ImGUI는 크기가 작아 DLL로 분리하지 않고 파일을 직접 포�
 
 ## 명령 처리
 
-`DirectWindow`는 UI 동작(예: 버튼 클릭)을 네트워크 작업에 연결하는 콜백을 통해 명령을 호출합니다.
-
-구조화된 명령 [Command](/ImGuiSolution/Command.h)는 [App](ImGuiSolution/App.h)의 `MainLoop()`에서 순차적으로 큐에 추가되어 처리됩니다. 이는 다음 렌더링 사이클 이전에 모든 명령이 처리되도록 하여 레이스 컨디션을 방지합니다.
+`DirectWindow`는 UI 동작(예: 버튼 클릭)을 네트워크 작업에 연결하는 콜백을 통해 명령을 호출합니다. 구조화된 명령 [Command](/ImGuiSolution/Command.h)은 [concurrent_queue](https://learn.microsoft.com/en-us/cpp/parallel/concrt/reference/concurrent-queue-class?view=msvc-170)를 사용하여 큐에 추가된 후, 별도의 스레드에서 처리됩니다.

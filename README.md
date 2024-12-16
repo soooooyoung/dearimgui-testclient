@@ -46,4 +46,4 @@ The `NetworkClient` instance is added upon `Connect` command. Each handles indiv
 
 `DirectWindow` invokes commands via a callback, linking UI actions (e.g., button clicks) to network operations.
 
-[Commands](/ImGuiSolution/Command.h) such as Connect are then queued and processed sequentially in the `MainLoop()` of [App](ImGuiSolution/App.h), ensuring all commands are handled before the next render cycle to avoid race conditions.
+[Commands](/ImGuiSolution/Command.h) such as Connect are then queued and processed concurrently on separate thread using [concurrent_queue](https://learn.microsoft.com/en-us/cpp/parallel/concrt/reference/concurrent-queue-class?view=msvc-170).
