@@ -20,18 +20,12 @@ public:
 	~DirectWindow();
 
 	bool Initialize();
-	//void RunLoop();
 
 	void Draw();
 
 	void MainUI();
-	void ClientWindow(std::weak_ptr<NetworkClient> client);
+	bool ClientWindow(std::weak_ptr<NetworkClient> client);
 	void SetStyle();
-
-	void PushChat(const std::string& chat)
-	{
-		mChatHistory.push_back(chat);
-	}
 
 	void PushClient(std::weak_ptr<NetworkClient> client)
 	{
@@ -50,7 +44,6 @@ private:
 	WNDCLASSEXW wc = {};
 
 	std::vector<std::weak_ptr<NetworkClient>> mClientList;
-	std::vector<std::string> mChatHistory;
 
 	ImVec4 mClearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 };

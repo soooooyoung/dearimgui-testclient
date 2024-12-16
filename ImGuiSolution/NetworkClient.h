@@ -15,6 +15,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <concurrent_queue.h>
 
 #include "NetworkContext.h"
 
@@ -25,6 +26,8 @@ public:
 	virtual ~NetworkClient();
 
 	bool Initialize();
+	void Close();
+
 	bool PostConnect(const std::string& ipAddress, int port);
 	bool OnConnect();
 	bool Receive();
@@ -38,11 +41,18 @@ public:
 	void SetSessionID(int sessionID) { mSessionID = sessionID; }
 	
 	bool IsConnected() const { return mIsConnected; }
+	bool IsPacketAvailable() { return !mPacketQueue.empty(); }
 
+	std::shared_ptr<NetworkPacket> GetPacket() {
+		std::shared_ptr<NetworkPacket> packet;
+		mPacketQueue.try_pop(packet);
+		return packet;
+	}
+
+	void PushChat(const std::string& chat) { mChatHistory.push_back(chat); }	
+	std::vector<std::string>& GetChatHistory() { return mChatHistory; }
 
 	std::unique_ptr<NetworkContext>& GetSendContext() { return mSendContext; }	
-
-	std::function<void(std::unique_ptr<NetworkPacket>&&)> mPacketCallback;
 private:
 	bool mIsConnected = false;
 	int mSessionID = 0;
@@ -51,4 +61,8 @@ private:
 
 	std::unique_ptr<NetworkContext> mReceiveContext;
 	std::unique_ptr<NetworkContext> mSendContext;
+
+	concurrency::concurrent_queue<std::shared_ptr<NetworkPacket>> mPacketQueue;
+
+	std::vector<std::string> mChatHistory;
 };

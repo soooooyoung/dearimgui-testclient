@@ -1,4 +1,6 @@
 ﻿#pragma once
+#include <thread>
+#include <vector>
 
 #include "NetworkClient.h"
 #include "SharedEnum.h"

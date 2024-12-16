@@ -104,14 +104,14 @@
     <ClInclude Include="NetworkPacket.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="StringUtil.h">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="ConfigLoader.h">
       <Filter>Config</Filter>
     </ClInclude>
     <ClInclude Include="JSON.h">
       <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryPool.h">
+      <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -93,6 +93,10 @@ void NetworkManager::WorkerThread()
 		if (FALSE == bSuccess)
 		{
 			printf_s("WorkerThread Fail: %d\n", WSAGetLastError());
+			if (nullptr != client)
+			{
+				client->Close();
+			}
 			continue;
 		}
 
@@ -139,11 +143,19 @@ void NetworkManager::_HandleReceive(NetworkClient& client, NetworkContext& conte
 		return;
 	}
 
+	if (false == context.Write(transferred))
+	{
+		printf_s("_HandleSend Error: Failed to Write\n");
+		return;
+	}
+
 	if (false == client.ProcessPacket())
 	{
 		printf_s("_HandleSend Error: Failed to ProcessPacket\n");
 		return;
 	}
+
+	client.Receive();
 }
 
 void NetworkManager::_HandleSend(NetworkClient& client, NetworkContext& context, int transferred)

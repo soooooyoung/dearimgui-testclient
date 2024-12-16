@@ -1,7 +1,7 @@
 ﻿#include "NetworkClient.h"
 #include "DirectWindow.h"
+#include "NetworkPacket.h"
 #include "Command.h"
-#include "StringUtil.h"
 
 static UINT  g_ResizeWidth = 0, g_ResizeHeight = 0;
 
@@ -117,15 +117,19 @@ void DirectWindow::MainUI()
 	ImGui::End();
 }
 
-void DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
+bool DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 {
 	if (client.expired())
-		return;
+	{
+		return false;
+	}
 
 	auto clientPtr = client.lock();
 
 	if (!clientPtr->IsConnected())
-		return;
+	{
+		return false;
+	}
 
 	ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
 
@@ -146,10 +150,20 @@ void DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 			// Chat Box
 			ImGui::Text("Chat Box");
 			ImGui::Separator();
-			for (const auto& chat : mChatHistory)
+
+			if (clientPtr->IsPacketAvailable())
+			{
+				auto packet = clientPtr->GetPacket();
+				std::string chat = std::string((char*)packet->GetBody(), packet->GetBodySize());
+				
+				clientPtr->PushChat(chat);
+			}
+
+			for (auto& chat : clientPtr->GetChatHistory())
 			{
 				ImGui::Text(chat.c_str());
 			}
+
 			ImGui::EndChild();
 		}
 
@@ -178,6 +192,8 @@ void DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 	}
 
 	ImGui::End();
+
+	return true;
 }
 
 void DirectWindow::SetStyle()
@@ -274,9 +290,16 @@ void DirectWindow::Draw()
 
 	if (!mClientList.empty())
 	{
-		for (auto& client : mClientList)
+		for (auto iter = mClientList.begin(); iter != mClientList.end();)
 		{
-			ClientWindow(client);
+			if (!ClientWindow(*iter))
+			{
+				iter = mClientList.erase(iter);
+			}
+			else
+			{
+				++iter;
+			}
 		}
 	}
 

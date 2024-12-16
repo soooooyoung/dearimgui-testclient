@@ -35,6 +35,17 @@ bool NetworkClient::Initialize()
 	mSocket = socket;
 }
 
+void NetworkClient::Close()
+{
+	struct linger stLinger = { 0,0 }; 
+
+	shutdown(mSocket, SD_BOTH);
+	setsockopt(mSocket, SOL_SOCKET, SO_LINGER, (char*)&stLinger, sizeof(stLinger));
+	closesocket(mSocket);
+	mSocket = INVALID_SOCKET;
+	mIsConnected = false;
+}
+
 bool NetworkClient::PostConnect(const std::string& ipAddress, int port)
 {
 	DWORD bytes = 0;
@@ -136,7 +147,7 @@ bool NetworkClient::Send()
 	mSendContext->ClearOverlapped();
 	mSendContext->mContextType = ContextType::SEND;
 
-	mSendContext->Write(packet);
+	mSendContext->Write(&packet, packet.GetPacketSize());
 
 	DWORD dwSendNumBytes = 0;
 	WSABUF wsaBuf = { 0, };
@@ -174,7 +185,7 @@ bool NetworkClient::ProcessPacket()
 	auto packetHeader = reinterpret_cast<NetworkPacket::PacketHeader*>(mReceiveContext->GetReadBuffer());
 	auto packetLength = packetHeader->BodyLength + sizeof(NetworkPacket::PacketHeader);
 
-	auto packet = std::make_unique<NetworkPacket>();
+	auto packet = std::make_shared<NetworkPacket>();
 	packet->Header = *packetHeader;
 
 	if (remainSize < packetLength)
@@ -192,7 +203,9 @@ bool NetworkClient::ProcessPacket()
 		return false;
 	}
 
-	mPacketCallback(std::move(packet));
+	printf_s("Packet Received: %s\n", packet->Body.data());
+
+	mPacketQueue.push(std::move(packet));
 }
 
 bool NetworkClient::Receive()
