@@ -3,7 +3,12 @@
 [![en](https://img.shields.io/badge/lang-english-yellow.svg)](README.md)
 [![kr](https://img.shields.io/badge/lang-한국어-red.svg)](README.kr.md)
 
-This project is a test client using [Dear ImGui library](https://github.com/ocornut/imgui), specifically meant to test servers in [this repository](https://github.com/soooooyoung/iocp-study).
+<div style="display:flex; justify-content:center" >
+<image src="images/minion.png" width=200/>
+</div>
+
+This project is a test client using [Dear ImGui library](https://github.com/ocornut/imgui),
+specifically meant to test servers in [this repository](https://github.com/soooooyoung/iocp-study).
 
 # Implementation Process
 
