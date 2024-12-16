@@ -1,5 +1,8 @@
 # Test Client
 
+[![en](https://img.shields.io/badge/lang-english-yellow.svg)](README.md)
+[![kr](https://img.shields.io/badge/lang-한국어-red.svg)](README.kr.md)
+
 This project is a test client using [Dear ImGui library](https://github.com/ocornut/imgui), specifically meant to test servers in [this repository](https://github.com/soooooyoung/iocp-study).
 
 # Implementation Process
@@ -28,14 +31,14 @@ Most network operations adhere to general practices from the testing server, lev
 
 ### [Network Manager](/ImGuiSolution/NetworkManager.h)
 
-The NetworkManager class initializes Winsock and creates an I/O Completion Port (IOCP) fo to enable efficient asynchronous networking.
+The NetworkManager class initializes Winsock and creates an I/O Completion Port (IOCP) to enable efficient asynchronous networking.
 
 ### [Client Connections](/ImGuiSolution/NetworkClient.h)
 
-The `NetworkClient` instance is added upon AddConnection comman. Each handles individual client network operations, utilizing `ConnectEx` for non-blocking connection establishment.
+The `NetworkClient` instance is added upon `Connect` command. Each handles individual client network operations, utilizing `ConnectEx` for non-blocking connection establishment.
 
 ## Command Handling
 
 `DirectWindow` invokes commands via a callback, linking UI actions (e.g., button clicks) to network operations.
 
-Commands such as Connect are then queued and processed sequentially in the `MainLoop()` of [App](ImGuiSolution/App.h), ensuring all commands are handled before the next render cycle to prevent race conditions.
+[Commands](/ImGuiSolution/Command.h) such as Connect are then queued and processed sequentially in the `MainLoop()` of [App](ImGuiSolution/App.h), ensuring all commands are handled before the next render cycle to avoid race conditions.
