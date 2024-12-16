@@ -1,12 +1,13 @@
 ﻿#pragma once
-#include "SharedEnum.h"
 #include <WinSock2.h>
-#include <memory>
-#include <span>
 #include <array>
+#include <cstdint>
+#include <span>
 
-struct NetworkPacket;
-class NetworkContext : public std::enable_shared_from_this<NetworkContext>, public OVERLAPPED
+#include "SharedEnum.h"
+
+
+class NetworkContext : public OVERLAPPED
 {
 private:
 	std::array<std::uint8_t, 8096> mBuffer;
@@ -32,9 +33,7 @@ public:
 	void ResetBuffer();
 	void AlignBuffer();
 
-
 	bool Write(void* data, std::size_t size);
-	bool Write(NetworkPacket& packet);
 	bool Write(int size);
 
 	bool Read(std::span<std::uint8_t> data);
