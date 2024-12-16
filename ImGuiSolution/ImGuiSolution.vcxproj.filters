@@ -113,6 +113,9 @@
     <ClInclude Include="MemoryPool.h">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\thirdparty\imgui\imgui.gdb">

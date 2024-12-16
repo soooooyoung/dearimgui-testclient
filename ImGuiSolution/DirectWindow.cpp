@@ -114,6 +114,24 @@ void DirectWindow::MainUI()
 		}
 	}
 
+	ImGui::SameLine();
+
+	if (ImGui::Button("Start Test", ImVec2(100 - ImGui::GetStyle().ItemSpacing.x, 0)))
+	{
+		if (mCommandCallback)
+		{
+			mCommandCallback(Command(CommandType::StartTest, nullptr));
+		}
+	}
+
+	if (ImGui::Button("Stop Test", ImVec2(100 - ImGui::GetStyle().ItemSpacing.x, 0)))
+	{
+		if (mCommandCallback)
+		{
+			mCommandCallback(Command(CommandType::StopTest, nullptr));
+		}
+	}
+
 	ImGui::End();
 }
 

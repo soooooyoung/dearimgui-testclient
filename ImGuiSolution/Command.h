@@ -5,10 +5,10 @@
 enum class CommandType
 {
 	None,
+	StartTest,
+	StopTest,
 	Connect,
-	// 클라이언트 자체에서 처리	하도록 변경..
-	//	Send,
-	//	Receive,
+	Send,
 };
 
 struct Command

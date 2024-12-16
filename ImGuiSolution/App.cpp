@@ -31,11 +31,13 @@ bool App::Initialize()
 		return false;
 	}
 
+
 	return true;
 }
 
 void App::MainLoop()
 {
+	auto testConfig = ConfigLoader::GetInstance().GetTestConfig();
 	mRunning = true;
 	mCommandThread = std::thread([this]() {
 		while (mRunning)
@@ -53,10 +55,15 @@ void App::MainLoop()
 	{
 		if (!mCommandQueue.empty())
 		{
-			std::this_thread::yield();
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 
 		mDirectWindow->Draw();
+
+		if (mTimer.Elapsed<std::milli>() > 1000)
+		{
+			mTimer.Update();
+		}
 	}
 }
 
@@ -101,15 +108,18 @@ bool App::ProcessCommand()
 		client->PostConnect(clientConfig.mServerAddress, clientConfig.mServerPort);
 	}
 	break;
-	//case CommandType::Receive:
-	//{
-	//	mDirectWindow->PushChat(command.Data);
-	//}
-	//break;
-	//case CommandType::Send:
-	//{
+	case CommandType::StartTest:
+	{
+		auto& testConfig = ConfigLoader::GetInstance().GetTestConfig();
+		printf_s("Start Test: %d\n", testConfig.mClientCount);
 
-	//}
+		auto pushCommand = [&]() {
+			PushCommand(Command(CommandType::Connect, nullptr));
+			};
+
+		mTimer.SetCallback(pushCommand);
+		mTimer.Reset();
+	}
 	break;
 	default:
 		break;

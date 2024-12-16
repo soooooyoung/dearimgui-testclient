@@ -2,5 +2,9 @@
   "server": {
     "port": 9000,
     "ip": "127.0.0.1"
+  },
+  "test": {
+    "clientCount": 10,
+    "interval": 1000
   }
 }
