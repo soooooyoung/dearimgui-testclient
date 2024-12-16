@@ -42,8 +42,6 @@ void App::MainLoop()
 	mCommandThread = std::thread([this]() {
 		while (mRunning)
 		{
-			std::lock_guard<std::mutex> lock(mCommandLock);
-
 			if (false == ProcessCommand())
 			{
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -83,7 +81,8 @@ bool App::ProcessCommand()
 		return false;
 	}
 
-	auto& command = mCommandQueue.front();
+	Command command;
+	mCommandQueue.try_pop(command);
 
 	switch (command.Type)
 	{
@@ -124,8 +123,6 @@ bool App::ProcessCommand()
 	default:
 		break;
 	}
-
-	mCommandQueue.pop();
 
 	return true;
 }

@@ -144,6 +144,11 @@ bool DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 
 	auto clientPtr = client.lock();
 
+	if (clientPtr == nullptr)
+	{
+		return false;
+	}
+
 	if (!clientPtr->IsConnected())
 	{
 		return false;

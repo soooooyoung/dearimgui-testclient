@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <mutex>
+#include <concurrent_queue.h>
 #include <functional>
 #include <chrono>
 #include <condition_variable>
@@ -34,8 +35,7 @@ private:
 	std::unique_ptr<NetworkManager> mNetworkManager;
 	std::unique_ptr<DirectWindow> mDirectWindow;
 
-	std::mutex mCommandLock;
-	std::queue<Command> mCommandQueue;
+	concurrency::concurrent_queue<Command> mCommandQueue;
 	std::thread mCommandThread;
 
 	std::vector<std::shared_ptr<NetworkClient>> mClientList;
