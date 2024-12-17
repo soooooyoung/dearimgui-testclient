@@ -2,8 +2,8 @@
 #include "DirectWindow.h"
 #include "NetworkPacket.h"
 #include "Command.h"
-
-static UINT  g_ResizeWidth = 0, g_ResizeHeight = 0;
+//
+//static UINT  g_ResizeWidth = 0, g_ResizeHeight = 0;
 
 DirectWindow::DirectWindow()
 {
@@ -77,6 +77,33 @@ void DirectWindow::_CleanupImGui()
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+}
+
+LRESULT WINAPI DirectWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+		return true;
+	switch (msg)
+	{
+	case WM_SIZE:
+	{
+		DirectWindow* pThis = reinterpret_cast<DirectWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+		if (pThis && (pThis->mResizeWidth != LOWORD(lParam) || pThis->mResizeHeight != HIWORD(lParam)))
+		{
+			pThis->mResizeWidth = LOWORD(lParam);
+			pThis->mResizeHeight = HIWORD(lParam);
+		}
+	}
+	break;
+	case WM_SYSCOMMAND:
+		if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
+			return 0;
+		break;
+	case WM_DESTROY:
+		::PostQuitMessage(0);
+		break;
+	}
+	return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 void DirectWindow::MainUI()
@@ -297,10 +324,10 @@ void DirectWindow::Draw()
 		::DispatchMessage(&msg);
 	}
 
-	if (g_ResizeWidth != 0 && g_ResizeHeight != 0)
+	if (mResizeWidth != 0 && mResizeHeight != 0)
 	{
-		mRenderer->Resize(g_ResizeWidth, g_ResizeHeight);
-		g_ResizeWidth = g_ResizeHeight = 0;
+		mRenderer->Resize(mResizeWidth, mResizeHeight);
+		mResizeWidth = mResizeHeight = 0;
 		mRenderer->CreateRenderTarget();
 	}
 
@@ -326,6 +353,8 @@ void DirectWindow::Draw()
 		}
 	}
 
+	ImGui::ShowDemoWindow();
+
 	// Rendering
 	ImGui::Render();
 	const float clear_color_with_alpha[4] = { mClearColor.x * mClearColor.w, mClearColor.y * mClearColor.w, mClearColor.z * mClearColor.w, mClearColor.w };
@@ -339,39 +368,38 @@ void DirectWindow::Draw()
 	mRenderer->pSwapChain->Present(1, 0); // Present with vsync
 }
 
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-		return true;
-
-	DirectWindow* window = reinterpret_cast<DirectWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-
-
-	switch (msg)
-	{
-	case WM_SIZE:
-		if (wParam == SIZE_MINIMIZED)
-			return 0;
-
-		g_ResizeWidth = (UINT)LOWORD(lParam); // Queue resize
-		g_ResizeHeight = (UINT)HIWORD(lParam);
-		return 0;
-	case WM_SYSCOMMAND:
-		if ((wParam & 0xfff0) == SC_KEYMENU)
-			return 0;
-		break;
-	case WM_DESTROY:
-		::PostQuitMessage(0);
-		return 0;
-	case WM_DPICHANGED:
-		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)
-		{
-			const RECT* suggested_rect = (RECT*)lParam;
-			::SetWindowPos(hWnd, nullptr, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
-		}
-		break;
-	}
-	return ::DefWindowProcW(hWnd, msg, wParam, lParam);
-}
+//LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+//{
+//	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+//		return true;
+//
+//	DirectWindow* window = reinterpret_cast<DirectWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+//
+//
+//	switch (msg)
+//	{
+//	case WM_SIZE:
+//		if (wParam == SIZE_MINIMIZED)
+//			return 0;
+//
+//		g_ResizeWidth = (UINT)LOWORD(lParam); // Queue resize
+//		g_ResizeHeight = (UINT)HIWORD(lParam);
+//		return 0;
+//	case WM_SYSCOMMAND:
+//		if ((wParam & 0xfff0) == SC_KEYMENU)
+//			return 0;
+//		break;
+//	case WM_DESTROY:
+//		::PostQuitMessage(0);
+//		return 0;
+//	case WM_DPICHANGED:
+//		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)
+//		{
+//			const RECT* suggested_rect = (RECT*)lParam;
+//			::SetWindowPos(hWnd, nullptr, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+//		}
+//		break;
+//	}
+//	return ::DefWindowProcW(hWnd, msg, wParam, lParam);
+//}

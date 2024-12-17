@@ -12,6 +12,8 @@
 #include "Command.h"
 #include "D3D11Render.h"
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 class NetworkClient;
 class DirectWindow
 {
@@ -34,6 +36,10 @@ public:
 
 	D3D11Render* mRenderer;
 	std::function<void(Command&&)> mCommandCallback;
+
+	UINT mResizeWidth = 0;
+	UINT mResizeHeight = 0;
+
 private:
 	bool _InitializeImGui();
 	void _CleanupImGui();
@@ -46,6 +52,9 @@ private:
 	std::vector<std::weak_ptr<NetworkClient>> mClientList;
 
 	ImVec4 mClearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+	static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 };
 
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+//LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
