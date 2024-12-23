@@ -54,7 +54,4 @@ private:
 	ImVec4 mClearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 	static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 };
-
-//LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

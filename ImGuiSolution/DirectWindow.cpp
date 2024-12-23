@@ -2,8 +2,6 @@
 #include "DirectWindow.h"
 #include "NetworkPacket.h"
 #include "Command.h"
-//
-//static UINT  g_ResizeWidth = 0, g_ResizeHeight = 0;
 
 DirectWindow::DirectWindow()
 {
@@ -216,7 +214,6 @@ bool DirectWindow::ClientWindow(std::weak_ptr<NetworkClient> client)
 
 			ImGui::EndChild();
 		}
-
 	}
 
 	auto& sendContext = clientPtr->GetSendContext();
@@ -353,8 +350,6 @@ void DirectWindow::Draw()
 		}
 	}
 
-	ImGui::ShowDemoWindow();
-
 	// Rendering
 	ImGui::Render();
 	const float clear_color_with_alpha[4] = { mClearColor.x * mClearColor.w, mClearColor.y * mClearColor.w, mClearColor.z * mClearColor.w, mClearColor.w };
@@ -367,39 +362,3 @@ void DirectWindow::Draw()
 
 	mRenderer->pSwapChain->Present(1, 0); // Present with vsync
 }
-
-
-//LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-//{
-//	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-//		return true;
-//
-//	DirectWindow* window = reinterpret_cast<DirectWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-//
-//
-//	switch (msg)
-//	{
-//	case WM_SIZE:
-//		if (wParam == SIZE_MINIMIZED)
-//			return 0;
-//
-//		g_ResizeWidth = (UINT)LOWORD(lParam); // Queue resize
-//		g_ResizeHeight = (UINT)HIWORD(lParam);
-//		return 0;
-//	case WM_SYSCOMMAND:
-//		if ((wParam & 0xfff0) == SC_KEYMENU)
-//			return 0;
-//		break;
-//	case WM_DESTROY:
-//		::PostQuitMessage(0);
-//		return 0;
-//	case WM_DPICHANGED:
-//		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)
-//		{
-//			const RECT* suggested_rect = (RECT*)lParam;
-//			::SetWindowPos(hWnd, nullptr, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
-//		}
-//		break;
-//	}
-//	return ::DefWindowProcW(hWnd, msg, wParam, lParam);
-//}
