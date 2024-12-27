@@ -173,7 +173,6 @@
     <ClInclude Include="D3D11Render.h" />
     <ClInclude Include="DirectWindow.h" />
     <ClInclude Include="JSON.h" />
-    <ClInclude Include="MemoryPool.h" />
     <ClInclude Include="NetworkClient.h" />
     <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkManager.h" />

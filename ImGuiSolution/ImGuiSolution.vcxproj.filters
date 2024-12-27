@@ -110,9 +110,6 @@
     <ClInclude Include="JSON.h">
       <Filter>Config</Filter>
     </ClInclude>
-    <ClInclude Include="MemoryPool.h">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="Timer.h">
       <Filter>Utility</Filter>
     </ClInclude>

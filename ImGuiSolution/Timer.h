@@ -11,8 +11,6 @@ public:
 	~Timer() {}
 
 	void Reset() { mStart = std::chrono::high_resolution_clock::now(); }
-
-
 	
 	template<typename T>
 	float Elapsed() const
